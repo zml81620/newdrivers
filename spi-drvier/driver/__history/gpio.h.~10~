@@ -1,0 +1,25 @@
+#ifndef ZML_GPIO_H
+#define ZML_GPIO_H
+
+#define IN              0
+#define OUT             1
+#define LOW             0
+#define HIGH            1
+
+#define P24             68   /* EasyARM P2.4 */
+#define P25             69   /* EasyARM P2.5 */
+#define P26             70   /* EasyARM P2.6 */
+#define P27             71   /* EasyARM P2.7 */
+
+#define BUFFER_MAX      3
+#define DIRECTION_MAX   48
+
+
+int gpio_export(int pin);
+int gpio_unexport(int pin);
+int gpio_direction(int pin, int dir);
+int gpio_read(int pin);
+int gpio_write(int pin, int value);
+
+
+#endif

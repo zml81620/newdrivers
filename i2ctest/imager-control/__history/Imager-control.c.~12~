@@ -1,0 +1,27 @@
+#include <stdint.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <getopt.h>
+#include <fcntl.h>
+#include <linux/types.h>
+#include <string.h>
+
+#include "tca9548.h"
+#include "cmd.h"
+
+static void pabort(const char *s)
+{
+	perror(s);
+	abort();
+}
+
+int main(int argc,char *argv[])
+{
+	int fd = -1 ;
+
+	fd = open_master(I2C_CONTROLLER_NAME);
+
+
+    return 1;
+}

@@ -1,0 +1,84 @@
+#ifndef _MYSPI_H
+#define _MYSPI_H
+
+///////////////////////////
+// PROTOTYPES
+//////////////////////////
+/* Declaration of dv_spi.c functions */
+enum  spi_commands{Cmd_reset=1,Cmd_enspi=3,Cmd_dataformat=4,Cmd_Cshold=5,Cmd_Selchip=6};
+enum  spi_selchip{Sel_chip0=1,Sel_chip1=2};
+enum  spi_cshold{Cs_active_unhold=0,Cs_active_hold=1};
+enum  spi_dataformat{format_8bit=1,format_16bit=2};
+
+typedef union tagUarray
+{
+  unsigned int udata;
+  unsigned char uarray[4];
+}Uarray;
+
+
+
+///////////////////////////
+// DEFINITIONS & GLOBALS
+//////////////////////////
+// Register definitions to control the SPI
+#define SPIGCR0                                   0x01C66800  //SPI Global Control Register0
+#define SPIGCR1                                   0x01C66804  //SPI Global Control Register1
+#define SPIINT                                    0x01C66808  //SPI Interrupt Register
+#define SPILVL                                    0x01C6680c  //SPI Interrupt Level Register
+#define SPIFLG                                    0x01C66810  // SPI Flag Status Register
+#define SPIPC0                                    0x01C66814  // SPI Pin Control Register 0
+#define SPIPC2                                    0x01C6681C  // SPI Pin Control Register 2
+#define SPIDAT1                                   0x01C6683C  // SPI Shift Register 1
+#define SPIBUF                                    0x01C66840  // SPI Buffer Register
+#define SPIEMU                                    0x01C66844  // SPI Emulation Register
+#define SPIDELAY	                              0x01C66848  // SPI Delay Register
+#define SPIDEF                                    0x01C6684C  // SPI Default Chip Select Register
+#define SPIFMT0                                   0x01C66850  // SPI Data Format Register 0
+#define SPIFMT1                                   0x01C66854  // SPI Data Format Register 1
+#define SPIFMT2                                   0x01C66858  // SPI Data Format Register 2
+#define SPIFMT3                                   0x01C6685C  // SPI Data Format Register 3
+#define INTVEC0                                   0x01C66860  // SPI Interrupt Vector Register 0
+#define INTVEC1                                   0x01C66864  // SPI Interrupt Vector Register 1
+
+//Definition for GPIO Pin Multiplexing
+#ifndef PINMUX1REG
+
+#define PINMUX0REG                                0x01C40000
+#define PINMUX1REG                                0x01C40004
+
+#define VALUE_PINMUX0REG                          0x81400C09
+#define VALUE_PINMUX1REG                          0x10581
+
+#endif
+
+
+// SPI format - Polarity and Phase
+// ***NOTE*** It doesn't seem like the SPI Phase for the davinci follows the standard
+// phase as described by the motorola architecture. I.E. phase 0 = sample on rising edge of clock
+// In the davinci it seems this is opposite.
+#define SPI_PHASE               1
+#define SPI_POLARITY            0
+#define SPI_PRESCALE            16
+// Macro for accessing a memory location such as a register
+#define SPI_REG(reg)    (*(int *__iomem) IO_ADDRESS(reg))
+
+// Version numbers
+#define MAJOR_VERSION           153
+#define MINOR_VERSION           01
+// Max Read/Write buff size
+#define MAX_BUF_SIZE            1024
+
+//Configure SPIFMTn
+#define SPIFMT_16BIT            0x00035A10 //5MHz (0x1A) Polarity 1,Phase 0
+#define SPIFMT_8BIT             0x00035A08 //5MHz (0x1A) Polarity 1,Phase 0
+
+//SPIBUF
+#define SPIBUF_TXFULL_MASK	BIT(29)
+#define SPIBUF_RXEMPTY_MASK	BIT(31)
+
+//EN CHIP MASK
+#define CHIP0_MASK        0x00020000
+#define CHIP1_MASK        0x01010000
+
+#endif

@@ -1,0 +1,45 @@
+#include <stdint.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <getopt.h>
+#include <fcntl.h>
+#include <linux/types.h>
+#include <string.h>
+
+#include "tca9548.h"
+#include "cmd.h"
+
+static void pabort(const char *s)
+{
+	perror(s);
+	abort();
+}
+
+void send_cmd(const int fd,const unsigned char cmd[][2],int cnt)
+{
+	int i,ret;
+
+	for (i = 0; i < cnt; i++)
+	{
+		ret = write(fd,cmd[i],sizeof(cmd[i]));
+//		printf("\nSend cmd[%d][0]=0x%0x,cmd[%d][1]=0x%0x %s,\n",i,\
+//		(unsigned char)(cmd[i][0]), i, (unsigned char)(cmd[i][1]), (ret>0) ? "successfully" : "failed");
+	}
+}
+
+int main(int argc,char *argv[])
+{
+	int fd = -1 ;
+	int len = 0 ;
+
+	fd = open_master(I2C_CONTROLLER_NAME);
+	len = enable_switcher_chan(fd, ENABLE_TCA9548_CH5);
+//	printf("\n enable ch5 %s\n", (len>0) ? "successfully" : "failed");
+	len = select_slave(fd, SLAVE_IMAGER_ADDR);
+//	printf("\n select_slave to 0x%x %s\n", SLAVE_IMAGER_ADDR,(len == 0) ? "successfully" : "failed");
+	send_cmd(fd,imager_cmd, ARRAY_SIZE(imager_cmd));
+	disable_switcher_chan(fd);
+
+    return 1;
+}

@@ -91,6 +91,7 @@ static void matrix_kp_get_col_status(unsigned char * status, int cnt)
 		}
 #if 1
 		ret = gpio_direction_input(row_gpio[row]);
+        printk("\n after col scan,status = 0x%x\n",status[row]);
 #else
 		ret = gpio_direction_input(row_gpio[row]);
 	    printk("\ngpio_direction_input(row_gpio[row]) = %d\n",ret);

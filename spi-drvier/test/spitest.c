@@ -24,8 +24,8 @@ const char *fun_items[] =
    "1:Test all register of FPGA",\
    "2:SPI Test",\
    "3:Test all register of CPLD",\
-   "4:LCD control register",\
-   "5:LCOS control register",\
+   "4:Disable 24M clock",\
+   "5:Enbale 24M clock",\
 //-------------------------------------------------------------
 	"6:FPGA ccm-enable register",\
 	"7:FPGA zero-set register",\
@@ -37,7 +37,7 @@ const char *fun_items[] =
 	"13:FPGA low 8bit calculus-time register",\
 	"14:FPGA hight 8bit calculus-time register",\
 	"15:FPGA low 8bit sensor-temperature register",\
-	"16:FPGA hight 8bit sensor-temperature register"
+	"16:FPGA hight 8bit sensor-temperature register",\	
 };
 
 struct spi_cmd
@@ -334,22 +334,12 @@ int main(int argc,char *argv[])
 		break;
 		case 4:
 		{
-		   if(lastcmd != value)
-		   {
-			 configspi(fd,Sel_chip1,format_16bit,Cs_active_unhold);
-			 lastcmd = value;
-           }
-		   process(fd,4,1);
+             ioctl(fd,Cmd_disable24M,Cmd_disable24M);
 		}
 		break;
 		case 5:
 		{
-		   if(lastcmd != value)
-		   {
-			 configspi(fd,Sel_chip1,format_16bit,Cs_active_unhold);
-			 lastcmd = value;
-		   }
-		   process(fd,5,1);
+            ioctl(fd,Cmd_enable24M,Cmd_enable24M);
 		}
 		break;
 		case 6:

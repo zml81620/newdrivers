@@ -1,7 +1,7 @@
-cmd_/mnt/hgfs/share/keyboard-driver/event2-driver/keypad_event2.mod.o := /opt/arm-2009q1/bin/arm-none-linux-gnueabi-gcc -Wp,-MD,/mnt/hgfs/share/keyboard-driver/event2-driver/.keypad_event2.mod.o.d  -nostdinc -isystem /opt/arm-2009q1/bin/../lib/gcc/arm-none-linux-gnueabi/4.3.3/include -Iinclude  -I/root/dvsdk_2_00_00_22/linux-davinci/arch/arm/include -include include/linux/autoconf.h -D__KERNEL__ -mlittle-endian -Iarch/arm/mach-davinci/include -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -Werror-implicit-function-declaration -Wno-format-security -fno-delete-null-pointer-checks -Os -marm -fno-omit-frame-pointer -mapcs -mno-sched-prolog -mabi=aapcs-linux -mno-thumb-interwork -D__LINUX_ARM_ARCH__=5 -march=armv5te -mtune=arm9tdmi -msoft-float -Uarm -fno-stack-protector -fno-omit-frame-pointer -fno-optimize-sibling-calls -pg -Wdeclaration-after-statement -Wno-pointer-sign -fno-strict-overflow  -D"KBUILD_STR(s)=\#s" -D"KBUILD_BASENAME=KBUILD_STR(keypad_event2.mod)"  -D"KBUILD_MODNAME=KBUILD_STR(keypad_event2)" -D"DEBUG_HASH=34" -D"DEBUG_HASH2=27" -DMODULE -c -o /mnt/hgfs/share/keyboard-driver/event2-driver/keypad_event2.mod.o /mnt/hgfs/share/keyboard-driver/event2-driver/keypad_event2.mod.c
+cmd_/mnt/hgfs/workdir/newdrivers/event2-driver/keypad_event2.mod.o := /opt/arm-2009q1/bin/arm-none-linux-gnueabi-gcc -Wp,-MD,/mnt/hgfs/workdir/newdrivers/event2-driver/.keypad_event2.mod.o.d  -nostdinc -isystem /opt/arm-2009q1/bin/../lib/gcc/arm-none-linux-gnueabi/4.3.3/include -Iinclude  -I/root/dvsdk_2_00_00_22/linux-davinci/arch/arm/include -include include/linux/autoconf.h -D__KERNEL__ -mlittle-endian -Iarch/arm/mach-davinci/include -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -Werror-implicit-function-declaration -Wno-format-security -fno-delete-null-pointer-checks -Os -marm -fno-omit-frame-pointer -mapcs -mno-sched-prolog -mabi=aapcs-linux -mno-thumb-interwork -D__LINUX_ARM_ARCH__=5 -march=armv5te -mtune=arm9tdmi -msoft-float -Uarm -fno-stack-protector -fno-omit-frame-pointer -fno-optimize-sibling-calls -pg -Wdeclaration-after-statement -Wno-pointer-sign -fno-strict-overflow  -D"KBUILD_STR(s)=\#s" -D"KBUILD_BASENAME=KBUILD_STR(keypad_event2.mod)"  -D"KBUILD_MODNAME=KBUILD_STR(keypad_event2)" -D"DEBUG_HASH=16" -D"DEBUG_HASH2=46" -DMODULE -c -o /mnt/hgfs/workdir/newdrivers/event2-driver/keypad_event2.mod.o /mnt/hgfs/workdir/newdrivers/event2-driver/keypad_event2.mod.c
 
-deps_/mnt/hgfs/share/keyboard-driver/event2-driver/keypad_event2.mod.o := \
-  /mnt/hgfs/share/keyboard-driver/event2-driver/keypad_event2.mod.c \
+deps_/mnt/hgfs/workdir/newdrivers/event2-driver/keypad_event2.mod.o := \
+  /mnt/hgfs/workdir/newdrivers/event2-driver/keypad_event2.mod.c \
     $(wildcard include/config/module/unload.h) \
   include/linux/module.h \
     $(wildcard include/config/modules.h) \
@@ -309,6 +309,6 @@ deps_/mnt/hgfs/share/keyboard-driver/event2-driver/keypad_event2.mod.o := \
   include/linux/vermagic.h \
   include/linux/utsrelease.h \
 
-/mnt/hgfs/share/keyboard-driver/event2-driver/keypad_event2.mod.o: $(deps_/mnt/hgfs/share/keyboard-driver/event2-driver/keypad_event2.mod.o)
+/mnt/hgfs/workdir/newdrivers/event2-driver/keypad_event2.mod.o: $(deps_/mnt/hgfs/workdir/newdrivers/event2-driver/keypad_event2.mod.o)
 
-$(deps_/mnt/hgfs/share/keyboard-driver/event2-driver/keypad_event2.mod.o):
+$(deps_/mnt/hgfs/workdir/newdrivers/event2-driver/keypad_event2.mod.o):

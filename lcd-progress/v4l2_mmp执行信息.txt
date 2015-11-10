@@ -1,0 +1,162 @@
+./v4l2_mmap_loopback_ok.ok
+main : Entersd_fmt.pix.width=640,sd_fmt.pix.height=480
+
+vpbe_UE_1 : Envpfe_dev->fmt.fmt.pix.field=4
+ter
+initializinccdc_hw_params_ycbcr.frm_fmt raw else=1
+g capture devicevpfe_s_input
+
+setting data fsd_fmt.pix.width=640,sd_fmt.pix.height=480
+ormat
+input.namvpfe_dev->fmt.fmt.pix.field=4
+e = generic yuv
+Calling S_INPUTccdc_hw_params_ycbcr.frm_fmt raw else=1
+ with index = 0
+InitDevice:ioctvpfe-capture vpfe-capture: width = 640, height = 480, bpp = 2
+l:VIDIOC_S_INPUTvpfe-capture vpfe-capture: adjusted width = 640, height = 480, b
+pp = 2, bytesperline = 1280, sizeimage = 614400
+, selected input index = 0
+Initvpfe-capture vpfe-capture: width = 640, height = 480, bpp = 2
+Device:ioctl:VIDvpfe-capture vpfe-capture: adjusted width = 640, height = 480, b
+pp = 2, bytesperline = 1280, sizeimage = 614400
+IOC_G_INPUT, selvpfe_dev->fmt.fmt.pix.field=1
+ected input, genccdc_hw_params_ycbcr.frm_fmt raw else=0
+eric yuv
+Following standards available at the input
+Default crop capbility bounds - 0 0 640 480 ; default - 0 else ccdc_setwin  CCDC
+_FRMFMT_INTERLACED
+0 640 480
+set_ccdc_config_ycbcr_ov5640 once
+data_format:settReading 0x0 to ALAW
+Reading 0x0 to CLAMP
+
+Available imageReading 0x0 to DCSUB
+ formats at the Reading 0x0 to BLKCMP
+capture driver :-
+fmt_desc.indeReading 0x0 to FPC_ADDR
+x = 0
+fmt_desc.Reading 0x0 to FPC
+type = 1
+fmt_deReading 0x0 to FMTCFG
+sc.description =Reading 0x0 to COLPTN
+ YCbCr 4:2:2 IntReading 0x0 to FMT_HORZ
+erleaved UYVY
+fmt_desc.pixelforReading 0x0 to FMT_VERT
+mat = 59565955
+Reading 0x500 to HSIZE_OFF
+fmt_desc.index =Reading 0x0 to SDOFST
+ 1
+fmt_desc.typReading 0x0 to VP_OUT
+e = 1
+fmt_desc.Reading 0x32800 to SYN_MODE
+description = YCbCr 4:2:2 InterlReading 0x4ff to HORZ_INFO
+eaved YUYV
+fmt_Reading 0x0 to VERT_START
+desc.pixelformatReading 0x1df to VERT_LINES
+ = 56595559
+***Reading 0x1fe00 to PID
+****TRY_FMT (MinReading 0x3 to PCR
+ resolution) values before calliReading 0x32800 to SYN_MODE
+ng ioctl********Reading 0x0 to HD_VD_WID
+*****
+fmt.fmt.pReading 0x0 to PIX_LINES
+ix.width = 640
+Reading 0x4ff to HORZ_INFO
+fmt.fmt.pix.heigReading 0x0 to VERT_START
+ht = 480
+fmt.fmt.pix.field= 0
+Reading 0x1df to VERT_LINES
+fmt.fmt.pix.byteReading 0xffff00ff to CULLING
+sperline = 0
+fmReading 0x500 to HSIZE_OFF
+t.fmt.pix.sizeimReading 0x0 to SDOFST
+age = 0
+*******Reading 0x0 to SDR_ADDR
+TRY_FMT values aReading 0x0 to CLAMP
+fter calling iocReading 0x0 to DCSUB
+tl*************
+fmt.fmt.pix.widReading 0x0 to COLPTN
+th = 640
+fmt.fmReading 0x0 to BLKCMP
+t.pix.height = 4Reading 0x0 to FPC
+80
+fmt.fmt.pix.Reading 0x0 to VERT_LINES
+field= 4
+fmt.fmReading 0x0 to VDINT
+t.pix.bytesperline = 1280
+fmt.fReading 0x0 to ALAW
+mt.pix.sizeimageReading 0x0 to REC656IF
+ = 614400
+set_dReading 0x8000 to CCDCFG
+ata_format:finally negotiated wiReading 0x0 to FMTCFG
+dth:640 height:4Reading 0x0 to FMT_HORZ
+80
+set_data_forReading 0x0 to FMT_VERT
+mat:driver reporReading 0x0 to FMT_ADDR0
+ts bytes_per_linReading 0x0 to FMT_ADDR1
+e:1280
+set_dataReading 0x0 to FMT_ADDR2
+_format:driver rReading 0x0 to FMT_ADDR4
+eports size:614400
+set_data_forReading 0x0 to FMT_ADDR4
+mat:Finally negoReading 0x0 to FMT_ADDR5
+tiated width:640Reading 0x0 to FMT_ADDR6
+ height:480
+iniReading 0x0 to FMT_ADDR7
+tializing capturReading 0x0 to PRGEVEN_0
+e buffers
+device buffers:3
+bufReading 0x0 to PRGEVEN_1
+fer:0 phy:0 mmapReading 0x0 to PRGODD_0
+:0x40164000 lengReading 0x0 to PRGODD_1
+th:614400
+buffeReading 0x0 to VP_OUT
+r:1 phy:96000 mmap:0x401fa000 length:614400
+bufdavinci_v4l2 davinci_v4l2.1: Invalid format index
+fer:2 phy:12c000davinci_v4l2 davinci_v4l2.1: Before finishing with S_FMT:
+layer.pix_fmt.bytesperline = 1280,
+ layer.pix_fmt.width = 640,
+ layer.pix_fmt.height = 480,
+ layer.pix_fmt.sizeimage =614400
+ mmap:0x40290000davinci_v4l2 davinci_v4l2.1: pixfmt->width = 640,
+ layer->layer_info.config.line_length= 1280
+ length:614400
+initializing display device
+Queing buffer:0
+Queing buffer:1
+Queing buffer:2
+1. Opening VID1 device
+done
+fd = 6
+Display capability is supported
+Streaming is supported
+description = YUV 4:2:2 - UYVY
+Video Display type
+V4L2_PIX_FMT_UYVY
+2. Test request for buffers
+        Numbers of buffers returned - 3
+ VIDIOC_S_FMT: PASS
+3. Test GetFormat
+        dispheight = 480
+        disppitch = 1280
+        dispwidth = 640
+        imagesize = 614400
+4. Test querying of buffers and mapping them
+buffer:0 phy:0 mmap:0x40326000 length:614400
+        Total length of the buffer allocated = 614400
+buffer:1 phy:96000 mmap:0x403bc000 length:614400
+        Total length of the buffer allocated = 614400
+buffer:2 phy:12c000 mmap:0x40452000 length:614400
+        Total length of the buffer allocated = 614400
+5. Test initial queueing of buffers
+6. Test enqueuing of buffers -num_of_bufs=3
+ done
+7. Test STREAM_ON
+Video loopback completed successfully
+8. Test STREAM_OFF -
+9. Test buffer unmapping & closing of device -
+DONE ALL
+
+
+vpbe_UE_1 : Leave
+main : Leave

@@ -54,7 +54,7 @@ typedef union tagUarray
 #define SPIDAT1                                   0x01C6683C  // SPI Shift Register 1
 #define SPIBUF                                    0x01C66840  // SPI Buffer Register
 #define SPIEMU                                    0x01C66844  // SPI Emulation Register
-#define SPIDELAY	                              0x01C66848  // SPI Delay Register
+#define SPIDELAY	                          0x01C66848  // SPI Delay Register
 #define SPIDEF                                    0x01C6684C  // SPI Default Chip Select Register
 #define SPIFMT0                                   0x01C66850  // SPI Data Format Register 0
 #define SPIFMT1                                   0x01C66854  // SPI Data Format Register 1
@@ -124,11 +124,11 @@ static void inline wait_untilsend(void)
 {
 	if(NULL == g_clkptr)
 	{
-      return;
+          return;
 	}
 	while(SPIBUF_RXEMPTY_MASK & SPI_REG(SPIBUF))
 	{
-       cpu_relax();
+          cpu_relax();
 	}
 }
 
@@ -327,7 +327,7 @@ ssize_t dv_spi_ioctl(struct inode *inode, struct file *filp,\
 {
 	int tmp = -1;
 
-	if((cmd < Cmd_reset) || (cmd > Cmd_Selchip) || (arg < Sel_chip0)||(arg > Sel_chip1))
+	if((cmd < Cmd_reset) || (cmd > Cmd_enable24M) || (arg < Sel_chip0)||(arg > Cmd_enable24M))
 	{
 	  return -EINVAL ;
 	}
@@ -391,6 +391,27 @@ ssize_t dv_spi_ioctl(struct inode *inode, struct file *filp,\
 		 tmp = 0;
 	  }
 	  break;
+	  case Cmd_disable24M:
+	  {
+                 g_mux0 = SPI_REG(PINMUX0REG);
+                 g_mux1 = SPI_REG(PINMUX1REG);
+                 printk("reg0 = %x,reg1 = %x\n",g_mux0,g_mux1);
+                 printk("\nCmd_disable24M\n");
+		 SPI_REG(PINMUX1REG) = (g_mux1 & 0xFFFCFFFF);
+                 asm("nop\n\t");
+                 SPI_REG(PINMUX1REG) = (g_mux1 | 0x00030000);
+                 printk("\nCmd_enable24M\n");
+	  }
+	  break;
+	  case Cmd_enable24M:
+	  {
+	         SPI_REG(PINMUX1REG) = (g_mux1 | 0x00030000);
+		 printk("\nCmd_enable24M\n");
+		 g_mux0 = SPI_REG(PINMUX0REG);
+                 g_mux1 = SPI_REG(PINMUX1REG);
+                 printk("reg0 = %x,reg1 = %x\n",g_mux0,g_mux1);
+	  }
+	  break;
 	  default:
 	  {
         tmp = -EINVAL;
@@ -414,6 +435,7 @@ static struct file_operations dv_spi_fops =
 static int dv_spi_init(void)
 {
 	int result;
+        unsigned int phy_reg = 0;
 
 	/* Registering device */
 	result = register_chrdev(MAJOR_VERSION, "spi", &dv_spi_fops);
@@ -443,6 +465,8 @@ static int dv_spi_init(void)
     g_mux0 = SPI_REG(PINMUX0REG);
     g_mux1 = SPI_REG(PINMUX1REG);
     printk("reg0 = %x,reg1 = %x\n",g_mux0,g_mux1);
+    phy_reg = SPI_REG(PINMUX0REG + 0x34);
+    printk("phy_reg = %x\n",phy_reg);
 #endif
 	printk("\nInserting SPI module\n");
 	return 0;

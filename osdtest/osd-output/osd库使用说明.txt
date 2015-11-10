@@ -1,0 +1,42 @@
+OSD采用动态库的方式供应用程序调用，库名字：libosd.so，设置字体为24号，不可更改。
+1.libosd.so放在/lib目录下
+2.编译指令中添加： -losd
+  提示找不到该库的解决方法,设置库的搜索路径: -L /lib
+
+程序代码：
+#include "OsdChar.h"
+//------变量定义---------------------------
+    int lenY = 0 ;    
+    sYuvImage pImage ;
+    sOsdPos pOsdPos,sOsdPosAsc ;
+    unsigned char *pYuv = NULL ;
+//------OSD定义---------------------------
+    const static char* strOSD = "奕霖红外热像仪器-24" ;
+    const static char *strEosd = "℃ Welcome to IRION ℃" ;
+//---------设置字体大小---------------------------------
+    FrontSetup(CODE_24) ;  
+//--------参数设置--------------------------------------
+    pImage.videoformat = (Video_format)YUV_UYVY ;
+    pImage.uiYUVWidth = 640 ;  //imageWidth
+    pImage.uiYUVHeight =  480 ; //imageHeight
+    lenY = (pImage.uiYUVWidth* pImage.uiYUVHeight) ;
+//---------设置OSD的起始位置--------------------------------
+    pOsdPos.ucStartX = 10 ;
+    pOsdPos.ucStartY = 10 ;
+    pOsdPos.ucEndX = 0 ;
+    pOsdPos.ucEndY = 0 ;
+
+    sOsdPosAsc.ucStartX = 10 ;
+    sOsdPosAsc.ucStartY = 40 ;
+    sOsdPosAsc.ucEndX = 0 ;
+    sOsdPosAsc.ucEndY = 0 ;
+//------------------获取yuv图像帧的地址------------------
+    pYuv = (unsigned char*)src ; 
+//------------------k开始写入OSD--------------------------
+    if(NULL != pYuv)
+    {
+        pImage.p420SPY = (unsigned char*)pYuv ;
+        pImage.p420SPUV = (unsigned char*)(pYuv + lenY) ;
+        NEWOSDCharUYVY((const unsigned char*)strOSD,&pOsdPos,&pImage) ; //写入OSD
+        NEWOSDCharUYVY((const unsigned char*)strEosd,&sOsdPosAsc,&pImage) ;//写入OSD
+    }

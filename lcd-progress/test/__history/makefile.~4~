@@ -1,0 +1,21 @@
+# Makefile for fbdev applications
+
+CROSS_COMPILE = /opt/arm-2009q1/bin/arm-none-linux-gnueabi-
+CC = $(CROSS_COMPILE)gcc
+
+all: boot-app
+
+boot-app: boot-app.o
+	$(CC) -o fbdev_loopback $^
+
+dlcd_example:dlcd_example.o
+	$(CC) -o dlcd_example $^
+
+progressive_example:progressive_example.o
+	$(CC) -o progressive_example $^
+
+%.o:%.c
+	$(CC) $(CFLAGS) -c $^
+
+clean:
+	rm -f *.o *~ core fbdev_loopback dlcd_example progressive_example

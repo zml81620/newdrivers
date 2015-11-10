@@ -1,0 +1,423 @@
+﻿#include "OsdChar.h"
+
+
+#define UYVY
+#define CODE_12 0
+#define CODE_16 1
+#define CODE_24 0
+#define CODE_32 0
+
+#define INCLUDE_HZ  0
+#define INCLUDE_ASC 1
+
+static char Text_OsdY = 0xFF ;
+static char Text_OsdU = 0x80 ;
+static char Text_OsdV = 0x80 ;
+static char Line_OsdY = 0xFF ;
+
+#ifdef UYVY
+static char Line_OsdU = 0x89 ;
+static char Line_OsdV = 0x99 ;
+#endif
+
+static sMyFontTable g_sMyFontTable ;
+extern const unsigned char szASC16[];
+extern const unsigned char szHZK24[];
+
+
+
+
+/*******************************************************************************
+* Function Name  : FrontSetup
+* Description    : Setup a Front LIB on OSD.
+* Input          : - FontID: This parameter can be one of the following values:
+*                    :
+* Output         : None
+* Return         : None
+*******************************************************************************/
+void FrontSetup(char FontID)
+{
+    switch(FontID)
+    {
+#if CODE_12
+        case CODE_12:
+            {
+                g_sMyFontTable.ucHZCharWidth = 12 ;
+                g_sMyFontTable.ucHZCharHeight = 12 ;
+                g_sMyFontTable.ucASCCharWidth = 6 ;
+                g_sMyFontTable.ucASCCharHeight = 12 ;
+            #if INCLUDE_HZ
+                g_sMyFontTable.pHZKSrc = szHZK12 ;
+            #endif
+            #if INCLUDE_ASC
+                g_sMyFontTable.pASCKSrc = szASC12 ;
+            #endif
+            }
+        break;
+#endif
+#if CODE_16
+        case CODE_16:
+        default:
+            {
+                g_sMyFontTable.ucHZCharWidth = 16 ;
+                g_sMyFontTable.ucHZCharHeight = 16 ;
+                g_sMyFontTable.ucASCCharWidth = 8 ;
+                g_sMyFontTable.ucASCCharHeight = 16 ;
+            #if INCLUDE_HZ
+                g_sMyFontTable.pHZKSrc = szHZK16 ;
+            #endif
+            #if INCLUDE_ASC
+                g_sMyFontTable.pASCKSrc = szASC16 ;
+            #endif
+            }
+        break;
+#endif
+#if CODE_24
+        case CODE_24:	 //24号字库
+            {
+                g_sMyFontTable.ucHZCharWidth = 24 ;
+                g_sMyFontTable.ucHZCharHeight = 24 ;
+                g_sMyFontTable.ucASCCharWidth = 12 ;
+                g_sMyFontTable.ucASCCharHeight = 24 ;
+            #if INCLUDE_HZ
+                g_sMyFontTable.pHZKSrc = szHZK24 ;
+            #endif
+            #if INCLUDE_ASC
+                g_sMyFontTable.pASCKSrc = szASC24 ;
+            #endif
+            }
+        break;
+#endif
+#if CODE_32
+        case CODE_32:	 //32号字库
+            {
+                g_sMyFontTable.ucHZCharWidth = 32 ;
+                g_sMyFontTable.ucHZCharHeight = 32 ;
+                g_sMyFontTable.ucASCCharWidth = 16 ;
+                g_sMyFontTable.ucASCCharHeight = 32 ;
+            #if INCLUDE_HZ
+                g_sMyFontTable.pHZKSrc = szHZK32 ;
+            #endif
+            #if INCLUDE_ASC
+                g_sMyFontTable.pASCKSrc = szASC32 ;
+            #endif
+                g_sMyFontTable.pHZKSrc = szHZK32 ;
+                g_sMyFontTable.pASCKSrc = szASC32 ;
+            }
+        break;
+#endif        
+
+    }
+}
+//----------------------------------------------------------------------------------------------
+void OSDSetTextColor(char OsdR, char OsdG, char OsdB)
+{
+    Text_OsdY = 0.25*OsdR+0.504*OsdG+0.098*OsdB+16;
+    Text_OsdU = -0.148*OsdR-0.291*OsdG+0.439*OsdB+128;
+    Text_OsdV = 0.439*OsdR-0.368*OsdG-0.071*OsdB+128;
+}
+//----------------------------------------------------------------------------------------------
+char DrawChar2OSDUYVY(const sMyFont *pMyFont, sYuvImage *pImage) //把指定的字符写到osd上
+{
+    int  pixelCount = 0;
+    int  charHeight ;
+    int  charWidth  ;
+    int  multiple   = 0;    
+    const unsigned char *frontBuffer = NULL ;   
+    register int iOffsetbase,iOffset,index,i,j,temp=0;
+   
+
+    if( CHINESE_CHARSET == pMyFont->ucFlage ) //hz
+    {
+       charHeight = pMyFont->ucCharHeight ;
+       charWidth  = pMyFont->ucCharWidth ;
+       frontBuffer = (const unsigned char *)(&g_sMyFontTable.pHZKSrc[pMyFont->uiMapAddress]) ;
+    }
+    else if(ENGLISH_CHARSET == pMyFont->ucFlage )  //asc
+    {
+       charHeight = pMyFont->ucCharHeight ;
+       charWidth  = pMyFont->ucCharWidth ;
+       frontBuffer = (const unsigned char *)(&g_sMyFontTable.pASCKSrc[pMyFont->uiMapAddress]) ;
+    }
+    if((((pImage->uiYUVWidth)-(pMyFont->ucPoscolumn)) < charWidth)||
+       (((pImage->uiYUVWidth)-(pMyFont->ucPosrow)) < charHeight) )
+    {
+      	return -1 ;
+    }
+    multiple = (charWidth-1)/8+1 ;
+    for(index = 0; index < charHeight; index++)
+    {
+    	pixelCount = 0 ;
+        #if 1
+    	for(j=0;j<(multiple-1);j++)
+        {
+            iOffsetbase = (index+pMyFont->ucPosrow)*(pImage->uiYUVWidth)+(pMyFont->ucPoscolumn) ;
+    	    for(i=0;i<8;i++)
+            {               
+    	       if((frontBuffer[index*multiple+j]&(0x80>>i)) != 0x00)
+               {
+                  iOffset = ((iOffsetbase + pixelCount)<<1) ;
+                  pImage->p420SPY[iOffset] = Text_OsdU ;
+                  pImage->p420SPY[iOffset+1] = Text_OsdY ;
+                  pImage->p420SPY[iOffset+2] = Text_OsdV ;
+                  pImage->p420SPY[iOffset+3] = Text_OsdY ;
+               }
+               pixelCount++;
+            }
+        }
+        temp = charWidth-((multiple-1)<<3) ;
+        for(i=0;i<temp;i++)
+        {            
+            if((frontBuffer[index*multiple+j]&(0x80>>i)) != 0x00)
+            {
+                  iOffset = ((iOffsetbase + pixelCount)<<1) ;
+                  pImage->p420SPY[iOffset] = Text_OsdU ;
+                  pImage->p420SPY[iOffset+1] = Text_OsdY ;
+                  pImage->p420SPY[iOffset+2] = Text_OsdV ;
+                  pImage->p420SPY[iOffset+3] = Text_OsdY ;
+            }
+    	    pixelCount++;
+        }
+        #endif
+    }
+    return 0 ;
+}
+//----------------------------------------------------------------
+char DrawChar2OSD420SP(const sMyFont *pMyFont, sYuvImage *pImage) //把指定的字符写到osd上
+{
+    int  pixelCount = 0;
+    int  charHeight ;
+    int  charWidth  ;
+    int  multiple   = 0;
+    int  index,i,j;
+    const unsigned char *frontBuffer = NULL ;
+    int iStartY,iOffsetY,iOffsetUV ;
+    int temp = 0 ;
+
+    if( CHINESE_CHARSET == pMyFont->ucFlage ) //hz
+    {
+       charHeight = pMyFont->ucCharHeight ;
+       charWidth  = pMyFont->ucCharWidth ;
+       frontBuffer = (const unsigned char *)(&g_sMyFontTable.pHZKSrc[pMyFont->uiMapAddress]) ;
+    }
+    else if(ENGLISH_CHARSET == pMyFont->ucFlage )  //asc
+    {
+       charHeight = pMyFont->ucCharHeight ;
+       charWidth  = pMyFont->ucCharWidth ;
+       frontBuffer = (const unsigned char *)(&g_sMyFontTable.pASCKSrc[pMyFont->uiMapAddress]) ;
+    }
+    if((((pImage->uiYUVWidth)-(pMyFont->ucPoscolumn)) < charWidth)||
+       (((pImage->uiYUVWidth)-(pMyFont->ucPosrow)) < charHeight) )
+    {
+      	return -1 ;
+    }
+    multiple = (charWidth-1)/8+1 ;
+    for(index = 0; index < charHeight; index++)
+    {
+    	pixelCount = 0;
+        iStartY = ((index+pMyFont->ucPosrow)*(pImage->uiYUVWidth)+(pMyFont->ucPoscolumn))&0XFFFFFFFE ;  //保证能被2整除
+        iOffsetY = iStartY ;
+        iOffsetUV = (((index+pMyFont->ucPosrow)>>1)*(pImage->uiYUVWidth)+(pMyFont->ucPoscolumn))&0XFFFFFFFE ;
+       
+    	for(j=0;j<(multiple-1);j++)
+        {
+
+    	    for(i=0;i<8;i++)
+            {
+               iOffsetY = iStartY ;
+    	       if((frontBuffer[index*multiple+j]&(0x80>>i)) != 0x00)
+               {
+                   pImage->p420SPY[iOffsetY+pixelCount] = Text_OsdY ;
+                   pImage->p420SPUV[iOffsetUV+pixelCount] = Text_OsdU ;
+                   pImage->p420SPUV[iOffsetUV+pixelCount+1] = Text_OsdV ;
+
+                   pImage->p420SPY[iOffsetY+1+pixelCount] = Text_OsdY ;
+                   pImage->p420SPUV[iOffsetUV+pixelCount] = Text_OsdU ;
+                   pImage->p420SPUV[iOffsetUV+pixelCount+1] = Text_OsdV ;
+
+                   iOffsetY += pImage->uiYUVWidth ;
+
+                   pImage->p420SPY[iOffsetY+pixelCount] = Text_OsdY ;
+                   pImage->p420SPUV[iOffsetUV+pixelCount] = Text_OsdU ;
+                   pImage->p420SPUV[iOffsetUV+pixelCount+1] = Text_OsdV ;
+
+                   pImage->p420SPY[iOffsetY+1+pixelCount] = Text_OsdY ;
+                   pImage->p420SPUV[iOffsetUV+pixelCount] = Text_OsdU ;
+                   pImage->p420SPUV[iOffsetUV+pixelCount+1] = Text_OsdV ;
+               }
+               pixelCount++;
+            }
+        }
+        temp = charWidth-((multiple-1)<<3) ;
+        for(i=0;i<temp;i++)
+        {
+            iOffsetY = iStartY ;
+            if((frontBuffer[index*multiple+j]&(0x80>>i)) != 0x00)
+            {
+                   pImage->p420SPY[iOffsetY+pixelCount] = Text_OsdY ;
+                   pImage->p420SPUV[iOffsetUV+pixelCount] = Text_OsdU ;
+                   pImage->p420SPUV[iOffsetUV+pixelCount+1] = Text_OsdV ;
+
+                   pImage->p420SPY[iOffsetY+1+pixelCount] = Text_OsdY ;
+                   pImage->p420SPUV[iOffsetUV+pixelCount] = Text_OsdU ;
+                   pImage->p420SPUV[iOffsetUV+pixelCount+1] = Text_OsdV ;
+                   iOffsetY += pImage->uiYUVWidth ;
+
+                   pImage->p420SPY[iOffsetY+pixelCount] = Text_OsdY ;
+                   pImage->p420SPUV[iOffsetUV+pixelCount] = Text_OsdU ;
+                   pImage->p420SPUV[iOffsetUV+pixelCount+1] = Text_OsdV ;
+
+                   pImage->p420SPY[iOffsetY+1+pixelCount] = Text_OsdY ;
+                   pImage->p420SPUV[iOffsetUV+pixelCount] = Text_OsdU ;
+                   pImage->p420SPUV[iOffsetUV+pixelCount+1] = Text_OsdV ;
+            }
+    	    pixelCount++;
+        }
+       
+    }
+    return 0 ;
+}
+//----------------------------------------------------------------  g_sMyFontTable
+char NEWOSDCharYUV420SP(const unsigned char *pString, const sOsdPos* pOsdPos, sYuvImage *pImage)
+{
+    unsigned short int uiJNM = 0 ; //机内码
+    int iPosx = pOsdPos->ucStartX ;
+    int iPosy = pOsdPos->ucStartY ;
+    sMyFont pFont  ;
+    unsigned char ucQh,ucWh ;
+    int flage = 0 ;
+
+    if( (NULL == pString)||(NULL == pOsdPos)||(NULL == pImage) )
+    {
+       return 0 ;
+    }
+
+    while( 0 != *pString )
+    {
+       if( 0x80 < (unsigned char)*pString ) //是汉字
+       {
+          ucQh = (unsigned char)*(pString)-0xA0  ;          
+          pString++ ;
+          ucWh = (unsigned char)*(pString)-0xA0  ;          
+          uiJNM = GB2312_LOCATE(ucQh,ucWh) ;   
+          pFont.ucFlage = CHINESE_CHARSET ;   
+          pFont.ucCharWidth = g_sMyFontTable.ucHZCharWidth ;   
+          pFont.ucCharHeight = g_sMyFontTable.ucHZCharHeight ;  
+       }
+       else //是英文字符
+       {
+          uiJNM = (unsigned char)*(pString) ;
+          pFont.ucFlage = ENGLISH_CHARSET ;
+          pFont.ucCharWidth = g_sMyFontTable.ucASCCharWidth ;
+          pFont.ucCharHeight = g_sMyFontTable.ucASCCharHeight ;
+       }
+       flage = (pFont.ucCharWidth%8) ;
+       pFont.uiMapAddress = ( (pFont.ucCharWidth>>3) + ( flage?1:0) )*(pFont.ucCharHeight)*(uiJNM) ;
+       pFont.ucPoscolumn = iPosx ;
+       pFont.ucPosrow = iPosy ;
+       DrawChar2OSD420SP(&pFont,pImage) ;  //画OSD
+       iPosx += pFont.ucCharWidth ;
+       pString++ ; //Next Char
+    }
+    return 1 ;
+}
+//-----------------------------------------------------------------------------------------------------------
+char NEWOSDCharUYVY(const unsigned char *pString, const sOsdPos* pOsdPos, sYuvImage *pImage)
+{
+    unsigned short int uiJNM = 0 ; //机内码
+    int iPosx = pOsdPos->ucStartX ;
+    int iPosy = pOsdPos->ucStartY ;
+    sMyFont pFont  ;
+    unsigned char ucQh,ucWh ;
+    int flage = 0 ;
+
+    if( (NULL == pString)||(NULL == pOsdPos)||(NULL == pImage) )
+    {
+       return 0 ;
+    }
+
+    while( 0 != *pString )
+    {
+       if( 0x80 < (unsigned char)*pString ) //是汉字
+       {
+          ucQh = (unsigned char)*(pString)-0xA0  ;          
+          pString++ ;
+          ucWh = (unsigned char)*(pString)-0xA0  ;          
+          uiJNM = GB2312_LOCATE(ucQh,ucWh) ;   
+          pFont.ucFlage = CHINESE_CHARSET ;   
+          pFont.ucCharWidth = g_sMyFontTable.ucHZCharWidth ;   
+          pFont.ucCharHeight = g_sMyFontTable.ucHZCharHeight ;  
+       }
+       else //是英文字符
+       {
+          uiJNM = (unsigned char)*(pString) ;
+          pFont.ucFlage = ENGLISH_CHARSET ;
+          pFont.ucCharWidth = g_sMyFontTable.ucASCCharWidth ;
+          pFont.ucCharHeight = g_sMyFontTable.ucASCCharHeight ;
+       }
+       flage = (pFont.ucCharWidth%8) ;
+       pFont.uiMapAddress = ( (pFont.ucCharWidth>>3) + ( flage?1:0) )*(pFont.ucCharHeight)*(uiJNM) ;
+       pFont.ucPoscolumn = iPosx ;
+       pFont.ucPosrow = iPosy ;
+       DrawChar2OSDUYVY(&pFont,pImage) ;  //画OSD
+       iPosx += pFont.ucCharWidth ;
+       pString++ ; //Next Char
+    }
+    return 1 ;
+}
+//-------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+char DrawCrossLine( const sOsdPos horLinePoint,const sOsdPos verLinePoint,const int iLineWdith, sYuvImage *pImage )
+{
+   DrawHorLine( horLinePoint,iLineWdith,pImage ) ;
+   DrawVerLine( verLinePoint,iLineWdith,pImage ) ;
+}
+//--------------------------------------------------------------------------
+char DrawHorLine( const sOsdPos sPoint,const int iLineWdith, sYuvImage *pImage )
+{
+   int index ;
+#ifdef UYVY
+   int iTemp = (sPoint.ucEndX > pImage->uiYUVWidth)?(pImage->uiYUVWidth):sPoint.ucEndX ;
+   int iTempc = ((iTemp - sPoint.ucStartX)>>1) ;
+   int iOffsetY = ((sPoint.ucStartX+(sPoint.ucStartY)*(pImage->uiYUVWidth))<<1) ;    
+   for(index=iTempc-1;index>=0;index--)
+   {
+      pImage->p420SPY[iOffsetY++] ^= Line_OsdU ;
+      pImage->p420SPY[iOffsetY++] ^= Line_OsdY ;
+      pImage->p420SPY[iOffsetY++] ^= Line_OsdV ;
+      pImage->p420SPY[iOffsetY++] ^= Line_OsdY ;
+   }
+#endif
+#ifdef YUV420SP      
+   int iOffsetY = sPoint.ucStartX+(sPoint.ucStartY)*(pImage->uiYUVWidth) ;
+   memset(&(pImage->p420SPY[iOffsetY]),Line_OsdY,(sPoint.ucEndX - sPoint.ucStartX) ) ;
+#endif
+   return 0 ;
+}
+//---------------------------------------------------------------------------
+char DrawVerLine( const sOsdPos sPoint,const int iLineWdith, sYuvImage *pImage )
+{
+   int index=0 ; 
+#ifdef UYVY                                                     
+   int iTempIndex = (sPoint.ucEndY > pImage->uiYUVHeight)?(pImage->uiYUVHeight):sPoint.ucEndY ;
+   int iTempb = pImage->uiYUVWidth<<YUV_UYVY ;
+   int iOffsetY = ((sPoint.ucStartX + (sPoint.ucStartY)*iTempb)<<1) ;   
+   for(index=iTempIndex-1;index>=sPoint.ucStartY;index--)
+   {
+      pImage->p420SPY[iOffsetY]   ^= Line_OsdU ;
+      pImage->p420SPY[iOffsetY+1] ^= Line_OsdY ;
+      pImage->p420SPY[iOffsetY+2] ^= Line_OsdV ;
+      pImage->p420SPY[iOffsetY+3] ^= Line_OsdY ;
+      iOffsetY += iTempb ;
+   }
+#endif
+#ifdef YUV420SP   
+   int iOffsetY = sPoint.ucStartX + (sPoint.ucStartY)*pImage->uiYUVWidth ;
+   for(index=sPoint.ucStartY;index<sPoint.ucEndY;index++)
+   {
+      pImage->p420SPY[iOffsetY] = Line_OsdY ;
+      iOffsetY += pImage->uiYUVWidth ;
+   }
+#endif
+   return 0 ;
+}

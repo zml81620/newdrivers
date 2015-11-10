@@ -42,6 +42,7 @@ __attribute__((section("__versions"))) = {
 	{ 0xea147363, "printk" },
 	{ 0x7d11c268, "jiffies" },
 	{ 0xb1ad28e0, "__gnu_mcount_nc" },
+	{ 0xe707d823, "__aeabi_uidiv" },
 };
 
 static const char __module_depends[]

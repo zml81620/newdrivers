@@ -1,0 +1,744 @@
+#pragma hdrstop
+#pragma argsused
+
+#include <stdio.h>
+
+#ifdef _WIN32
+#include <tchar.h>
+#else
+  typedef char _TCHAR;
+  #define _tmain main
+#endif
+
+
+#include <fcntl.h>
+#include <string.h>
+#include <linux/fb.h> //FB_VMODE_NONINTERLACED
+#include <sys/mman.h>
+#include <sys/ioctl.h>
+#include <video/davincifb_ioctl.h>
+
+#include "osd16.h"
+#include "test_8.h"
+
+
+/* Device parameters */
+#define OSD0_DEVICE		"/dev/fb0"
+#define OSD1_DEVICE		"/dev/fb2"
+#define FBVID0_DEVICE		"/dev/fb1"
+#define FBVID1_DEVICE		"/dev/fb3"
+
+/* Function error codes */
+#define SUCCESS			0
+#define FAILURE			-1
+
+/* Bits per pixel for video window */
+#define YUV_422_BPP		16
+#define BITMAP_BPP_8		8
+
+#define DISPLAY_INTERFACE	"COMPOSITE"
+#define DISPLAY_MODE		"NTSC"
+
+#define round_32(width)		((((width) + 31) / 32) * 32 )
+
+#define ATTR_BLINK_INTERVAL	1
+#define ATTR_BLEND_VAL 		0xaa
+
+#define ATTRIB_MODE		"mode"
+#define ATTRIB_OUTPUT		"output"
+#define LCD_TEST_STD		LCD_STD_640x480
+#define OSD_NUM_BUFS		2
+
+
+#define CLEAR(x)	memset (&(x), 0, sizeof (x))
+
+/* D1 screen dimensions */
+#define VID0_WIDTH		720
+#define VID0_HEIGHT		480
+#define VID0_BPP		16
+#define VID0_FRAME_SIZE		(VID0_WIDTH*VID0_HEIGHT)
+#define VID0_VMODE		FB_VMODE_INTERLACED
+
+#define VID1_WIDTH 		720
+#define VID1_HEIGHT		480
+#define VID1_BPP		16
+#define VID1_FRAME_SIZE		(VID1_WIDTH*VID1_HEIGHT)
+#define VID1_VMODE		FB_VMODE_INTERLACED
+
+#define OSD0_BPP		4
+#define	OSD0_WIDTH		(round_32(240*OSD0_BPP/8) * 8/OSD0_BPP)
+#define	OSD0_HEIGHT		120
+#define OSD0_FRAME_SIZE		(OSD0_WIDTH*OSD0_HEIGHT)
+#define OSD0_VMODE		FB_VMODE_INTERLACED
+
+#define OSD1_BPP		8
+#define	OSD1_WIDTH		(round_32(240*OSD1_BPP/8) * 8/OSD1_BPP)
+#define	OSD1_HEIGHT		120
+#define OSD1_FRAME_SIZE		(OSD1_WIDTH*OSD1_HEIGHT)
+#define OSD1_VMODE		FB_VMODE_INTERLACED
+
+/* position */
+#define	OSD0_XPOS		0
+#define	OSD0_YPOS		0
+#define	OSD1_XPOS		300
+#define	OSD1_YPOS		250
+#define	VID0_XPOS		0
+#define	VID0_YPOS		0
+#define	VID1_XPOS		0
+#define	VID1_YPOS		0
+
+/* Zoom Params */
+#define	OSD0_HZOOM		0
+#define	OSD0_VZOOM		0
+#define	OSD1_HZOOM		0
+#define	OSD1_VZOOM		0
+#define	VID0_HZOOM		0
+#define	VID0_VZOOM		0
+#define	VID1_HZOOM		0
+#define	VID1_VZOOM		0
+
+/* OSD window blend factor */
+#define OSD1_WINDOW_BF		0
+#define OSD1_WINDOW_CK		0
+#define OSD1_CK			0
+#define OSD0_WINDOW_BF		3
+#define OSD0_WINDOW_CK		0
+#define OSD0_CK			0
+
+#define VIDEO_NUM_BUFS		3
+#define OSD_NUM_BUFS		2
+#define RED_COLOR 		249
+#define BLUE_COLOR 		140	//blue color
+#define RAM_CLUT_IDX 		0xFF
+#define BITMAP_COLOR		0x11
+
+#define CURSOR_XPOS		100
+#define CURSOR_YPOS		100
+#define CURSOR_XRES		50
+#define CURSOR_YRES		50
+#define CURSOR_THICKNESS	1
+#define CURSOR_COLOR		0xF9
+
+#define ATTR_BLINK_INTERVAL	1
+#define ATTR_BLEND_VAL 		0xaa
+
+#define ATTRIB_MODE		"mode"
+#define ATTRIB_OUTPUT		"output"
+#define LCD_TEST_STD		LCD_STD_640x480
+
+#define DEBUG
+#ifdef DEBUG
+#define DBGENTER  	printf("%s : Enter\n", __FUNCTION__);
+#define DBGEXIT		printf("%s : Leave\n", __FUNCTION__);
+#define PREV_DEBUG(x)	printf("DEBUG:%s:%s:%s\n",__FUNCTION__,__LINE__,x);
+#else
+#define DBGENTER
+#define DBGEXIT
+#define PREV_DEBUG(x)
+#endif
+
+static int change_sysfs_attrib(char *, char *);
+
+/*******************************************************************************
+ *	ENUMERATED DATATYPE DEFINITIONS
+ */
+enum lcd_standard {
+	LCD_STD_640x480,
+	LCD_STD_640x400,
+	LCD_STD_640x350,
+	LCD_STD_MAX
+};
+/*******************************************************************************
+ *	STRUCTURE DEFINITIONS
+ */
+struct buffer {
+	void *start;
+	size_t length;
+};
+
+struct vpbe_test_info {
+	int vid0_width;
+	int vid0_height;
+	int vid0_bpp;
+	int vid0_frame_size;
+	int vid0_vmode;
+
+	int vid1_width;
+	int vid1_height;
+	int vid1_bpp;
+	int vid1_frame_size;
+	int vid1_vmode;
+
+	int osd0_bpp;
+	int osd0_width;
+	int osd0_height;
+	int osd0_frame_size;
+	int osd0_vmode;
+
+	int osd1_bpp;
+	int osd1_width;
+	int osd1_height;
+	int osd1_frame_size;
+	int osd1_vmode;
+
+	int osd0_xpos;
+	int osd0_ypos;
+	int osd1_xpos;
+	int osd1_ypos;
+	int vid0_xpos;
+	int vid0_ypos;
+	int vid1_xpos;
+	int vid1_ypos;
+
+	int osd0_hzoom;
+	int osd0_vzoom;
+	int osd1_hzoom;
+	int osd1_vzoom;
+	int vid0_hzoom;
+	int vid0_vzoom;
+	int vid1_hzoom;
+	int vid1_vzoom;
+
+	int osd1_window_bf;
+	int osd1_window_ck;
+	int osd1_ck;
+	int osd0_window_bf;
+	int osd0_window_ck;
+	int osd0_ck;
+
+	char display_interface[32];
+	char display_mode[32];
+
+	int osd0_coloridx;
+	int osd1_coloridx;
+	int ram_clut_idx;
+	int bitmap_color;
+
+	int cursor_xpos;
+	int cursor_ypos;
+	int cursor_xres;
+	int cursor_yres;
+	int cursor_thickness;
+	int cursor_color;
+
+	int attr_blink_interval;
+	int attr_blend_val;
+};
+
+/*******************************************************************************
+ *	FILE GLOBALS
+ */
+ static struct vpbe_test_info test_data = {
+	VID0_WIDTH,
+	VID0_HEIGHT,
+	VID0_BPP,
+	VID0_FRAME_SIZE,
+	VID0_VMODE,
+
+	VID1_WIDTH,
+	VID1_HEIGHT,
+	VID1_BPP,
+	VID1_FRAME_SIZE,
+	VID1_VMODE,
+
+	OSD0_BPP,
+	OSD0_WIDTH,
+	OSD0_HEIGHT,
+	OSD0_FRAME_SIZE,
+	OSD0_VMODE,
+
+	OSD1_BPP,
+	OSD1_WIDTH,
+	OSD1_HEIGHT,
+	OSD1_FRAME_SIZE,
+	OSD1_VMODE,
+
+	OSD0_XPOS,
+	OSD0_YPOS,
+	OSD1_XPOS,
+	OSD1_YPOS,
+	VID0_XPOS,
+	VID0_YPOS,
+	VID1_XPOS,
+	VID1_YPOS,
+
+	OSD0_HZOOM,
+	OSD0_VZOOM,
+	OSD1_HZOOM,
+	OSD1_VZOOM,
+	VID0_HZOOM,
+	VID0_VZOOM,
+	VID1_HZOOM,
+	VID1_VZOOM,
+
+	OSD1_WINDOW_BF,
+	OSD1_WINDOW_CK,
+	OSD1_CK,
+	OSD0_WINDOW_BF,
+	OSD0_WINDOW_CK,
+	OSD0_CK,
+
+	DISPLAY_INTERFACE,
+	DISPLAY_MODE,
+
+        RED_COLOR,
+	RED_COLOR,
+	RAM_CLUT_IDX,
+	BITMAP_COLOR,
+
+	CURSOR_XPOS,
+	CURSOR_YPOS,
+	CURSOR_XRES,
+	CURSOR_YRES,
+	CURSOR_THICKNESS,
+	CURSOR_COLOR,
+
+	ATTR_BLINK_INTERVAL,
+	ATTR_BLEND_VAL,
+};
+static char *osd0_display[OSD_NUM_BUFS];
+static int fd_osd0, fd_osd1;
+static struct fb_var_screeninfo osd0_varInfo,osd1_varInfo, prev_osd0_var, prev_osd1_var;
+static struct fb_fix_screeninfo osd0_fixInfo, osd1_fixInfo;
+
+static int osd0_size, osd1_size;
+static int rgb565_enable;
+static int rgb565_enable_osd1;
+
+/******************************************************************************/
+static void close_all_windows(void)
+{
+	if (fd_osd0)
+        {
+		close(fd_osd0);
+        }
+	if (fd_osd1)
+        {
+		close(fd_osd1);
+        }
+}
+/******************************************************************************/
+static int open_all_windows(void)
+{
+	if ((fd_osd0 = open(OSD0_DEVICE, O_RDWR)) < 0)
+        {
+		goto open_all_exit;
+        }
+	return SUCCESS;
+open_all_exit:
+	close_all_windows();
+	return FAILURE;
+}
+/******************************************************************************/
+static int init_osd0_device(int fd_osd0, struct fb_var_screeninfo *var_info)
+{
+	vpbe_window_position_t pos;
+
+	if (ioctl(fd_osd0, FBIOGET_FSCREENINFO, &osd0_fixInfo) < 0)
+        {
+		printf("\nFailed FBIOGET_FSCREENINFO osd0");
+		return FAILURE;
+	}
+
+	/* Get Existing var_screeninfo for osd0 window */
+	if (ioctl(fd_osd0, FBIOGET_VSCREENINFO, var_info) < 0)
+        {
+		printf("\nFailed FBIOGET_VSCREENINFO");
+		return FAILURE;
+	}
+	prev_osd0_var = *var_info;
+
+	/* Modify the resolution and bpp as required */
+	var_info->xres = test_data.osd0_width;
+	var_info->yres = test_data.osd0_height;
+	var_info->bits_per_pixel = test_data.osd0_bpp;
+	var_info->vmode = test_data.osd0_vmode;
+	var_info->xres_virtual = 720;
+	var_info->yres_virtual = var_info->yres * OSD_NUM_BUFS;
+
+	/* Set osd0 window format */
+	if (ioctl(fd_osd0, FBIOPUT_VSCREENINFO, var_info) < 0)
+        {
+		printf("\nFailed FBIOPUT_VSCREENINFO");
+		return FAILURE;
+	}
+
+	/* Set window position */
+	pos.xpos = test_data.osd0_xpos;
+	pos.ypos = test_data.osd0_ypos;
+
+	if (ioctl(fd_osd0, FBIO_SETPOS, &pos) < 0)
+        {
+		printf("\nFailed  FBIO_SETPOS");
+		return FAILURE;
+	}
+
+	return SUCCESS;
+}
+
+/******************************************************************************/
+static int mmap_osd0(void)
+{
+	int i;
+	osd0_size = osd0_fixInfo.line_length * osd0_varInfo.yres;
+	/* Map the osd0 buffers to user space */
+	osd0_display[0] = (char *)mmap(NULL, osd0_size * OSD_NUM_BUFS,
+				       PROT_READ | PROT_WRITE, MAP_SHARED,
+				       fd_osd0, 0);
+
+	if (osd0_display[0] == MAP_FAILED)
+        {
+		printf("\nFailed mmap on %s", OSD0_DEVICE);
+		return FAILURE;
+	}
+
+	for (i = 0; i < OSD_NUM_BUFS - 1; i++)
+        {
+		osd0_display[i + 1] = osd0_display[i] + osd0_size;
+		printf("Display buffer %d mapped to address %#lx\n", i + 1,
+		       (unsigned long)osd0_display[i + 1]);
+	}
+	return SUCCESS;
+}
+/******************************************************************************/
+static int flip_bitmap_buffers(int fd, int buf_index)
+{
+	struct fb_var_screeninfo var_info;
+
+	if (ioctl(fd, FBIOGET_VSCREENINFO, &var_info) < -1)
+        {
+		printf("flip_bitmap_buffers:FBIOGET_VSCREENINFO\n\n");
+		return -1;
+	}
+
+	var_info.yoffset = var_info.yres * buf_index;
+
+	/* Swap the working buffer for the displayed buffer */
+	if (ioctl(fd, FBIOPAN_DISPLAY, &var_info) < -1)
+        {
+		printf("flip_bitmap_buffers:FBIOPAN_DISPLAY\n\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+/******************************************************************************/
+static int display_bitmap_osd0(void)
+{
+	static unsigned int nDisplayIdx = 1;
+	static unsigned int nWorkingIndex = 0;
+	int y;
+	char *dst;
+	char *src;
+	int fd;
+
+	dst = osd0_display[nWorkingIndex];
+	if (dst == NULL)
+        {
+		return -1;
+        }
+	fd = fd_osd0;
+	if (rgb565_enable == 1)
+        {	/* RGB565 */
+		src = (char *)rgb16;
+		for (y = 0; y < test_data.osd0_height; y++)
+                {
+			memcpy(dst, src, (test_data.osd0_width * 2));
+			dst += osd0_fixInfo.line_length;
+			src += (704 * 2);
+		}
+	}
+        else if (rgb565_enable == 2)
+        {	/* 8 bit bitmap */
+		src = (char *)test_8;
+		for (y = 0; y < test_data.osd0_height; y++)
+                {
+			memcpy(dst, src, (test_data.osd0_width));
+			dst += osd0_fixInfo.line_length;
+			src += (704);
+		}
+	}
+        else
+        {			/* 1/2/4 bit bitmap and attribute */
+		memset(dst, test_data.osd0_coloridx, osd0_size);
+        }
+
+	nWorkingIndex = (nWorkingIndex + 1) % OSD_NUM_BUFS;
+	nDisplayIdx = (nDisplayIdx + 1) % OSD_NUM_BUFS;
+
+	if ((flip_bitmap_buffers(fd, nDisplayIdx)) < 0)
+        {
+		return -1;
+        }
+	return 0;
+}
+/******************************************************************************/
+static int unmap_and_disable(char id)
+{
+
+	switch (id)
+        {
+#if 0
+	case VID0:
+		if (munmap(vid0_display[0], vid0_size * VIDEO_NUM_BUFS) == -1)
+                {
+			printf("\nFailed munmap on %s", FBVID1_DEVICE);
+			return FAILURE;
+		}
+		break;
+	case VID1:
+		if (munmap(vid1_display[0], vid1_size * VIDEO_NUM_BUFS) == -1)
+                {
+			printf("\nFailed munmap on %s", FBVID1_DEVICE);
+			return FAILURE;
+		}
+		break;
+	case OSD1:
+		if (munmap(osd1_display[0], osd1_size * OSD_NUM_BUFS) == -1)
+                {
+			printf("\nFailed munmap on %s", OSD1_DEVICE);
+			return FAILURE;
+		}
+		break;
+#endif
+	case OSD0:
+		if (munmap(osd0_display[0], osd0_size * OSD_NUM_BUFS) == -1)
+                {
+			printf("\nFailed munmap on %s", OSD0_DEVICE);
+			return FAILURE;
+		}
+		break;
+
+	default:
+		break;
+	}
+	return SUCCESS;
+}
+
+/******************************************************************************
+ * Test all windows simultaneously on DLCD
+ ******************************************************************************/
+static int vpbe_UE_3(enum lcd_standard lcd_std)
+{
+	struct fb_cursor cursor_info;
+	rgb565_enable = 1;	/* To display 16 bit image on osd0 */
+	rgb565_enable_osd1 = 2;	/* To display 8 bit image on osd1 */
+        int i = 0 ;
+	DBGENTER;
+
+	//initialize_capture();
+
+	test_data.vid0_width = 640;
+	test_data.vid0_bpp = 16;
+	test_data.vid0_xpos = 0;
+	test_data.vid0_ypos = 0;
+	test_data.vid0_vmode = FB_VMODE_NONINTERLACED;
+
+	test_data.vid1_width = 352;
+	test_data.vid1_height = 240;
+	test_data.vid1_bpp = 16;
+	test_data.vid1_vmode = FB_VMODE_NONINTERLACED;
+	test_data.vid1_xpos = 32;
+	test_data.vid1_ypos = 32;
+
+	test_data.osd0_bpp = 16;
+	test_data.osd0_xpos = 270;
+	test_data.osd0_ypos = 220;
+	test_data.osd0_width = 0;
+	test_data.osd0_height = 40;
+	test_data.osd0_vmode = FB_VMODE_NONINTERLACED;
+	test_data.osd0_coloridx = RED_COLOR;
+
+	test_data.osd1_bpp = 8;
+	test_data.osd1_xpos = 550;
+	test_data.osd1_width = 75;
+	test_data.osd1_height = 75;
+	test_data.osd1_vmode = FB_VMODE_NONINTERLACED;
+
+	strcpy(test_data.display_interface, "LCD");
+
+	switch (lcd_std)
+        {
+	case LCD_STD_640x480:
+		test_data.vid0_height = 480;
+		test_data.osd1_ypos = 380;
+		strcpy(test_data.display_mode, "640x480");
+		break;
+	case LCD_STD_640x400:
+		test_data.vid0_height = 400;
+		test_data.osd1_ypos = 300;
+		strcpy(test_data.display_mode, "640x400");
+		break;
+	case LCD_STD_640x350:
+		test_data.vid0_height = 350;
+		test_data.osd1_ypos = 250;
+		strcpy(test_data.display_mode, "640x350");
+		break;
+	default:
+		break;
+	}
+
+#if 0
+	change_sysfs_attrib(ATTRIB_OUTPUT, test_data.display_interface);
+	change_sysfs_attrib(ATTRIB_MODE, test_data.display_mode);
+
+	// Initialize all the windows
+	if ((init_vid0_device(fd_vid0, &vid0_varInfo)) < 0) {
+		printf("\nFailed to init vid0 window ");
+		return FAILURE;
+	}
+	if ((init_vid1_device(fd_vid1, &vid1_varInfo)) < 0) {
+		printf("\nFailed to init vid1 window ");
+		return FAILURE;
+	}
+	if ((init_osd1_device(fd_osd1, &osd1_varInfo)) < 0) {
+		printf("\nFailed to init osd1 window ");
+		return FAILURE;
+	}
+#endif
+        for(i=0;i<10;i++)
+        {
+          test_data.osd0_width += 10;
+	  if ((init_osd0_device(fd_osd0, &osd0_varInfo)) < 0)
+          {
+		printf("\nFailed to init osd0 window ");
+		return FAILURE;
+	  }
+        }
+#if 0
+	// Disable unwanted windows and enable needed windows only
+	if (ioctl(fd_vid0, FBIOBLANK, 0) < 0)
+        {
+		printf("\nFailed to enable VID0");
+		close(fd_vid0);
+		return FAILURE;
+	}
+	if (ioctl(fd_vid1, FBIOBLANK, 1) < 0)
+        {
+		printf("\nFailed to disable VID1");
+		close(fd_vid1);
+		return FAILURE;
+	}
+	if (ioctl(fd_osd1, FBIOBLANK, 0) < 0)
+        {
+		printf("\nFailed to enable OSD1");
+		close(fd_osd1);
+		return FAILURE;
+	}
+#endif
+	if (ioctl(fd_osd0, FBIOBLANK, 0) < 0)
+        {
+		printf("\nFailed to enable OSD0");
+		close(fd_osd0);
+		return FAILURE;
+	}
+#if 0
+	if (FAILURE == mmap_vid0())
+        {
+		return FAILURE;
+        }
+	if (FAILURE == mmap_vid1())
+        {
+		return FAILURE;
+        }
+	if (FAILURE == mmap_osd1())
+        {
+		return FAILURE;
+        }
+#endif
+	if (FAILURE == mmap_osd0())
+        {
+		return FAILURE;
+        }
+
+	cursor_info.enable = VPBE_ENABLE;
+	cursor_info.image.dx = CURSOR_XPOS;
+	cursor_info.image.dy = CURSOR_YPOS;
+	cursor_info.image.width = CURSOR_XRES;
+	cursor_info.image.height = CURSOR_YRES;
+	cursor_info.image.depth = CURSOR_THICKNESS;
+	cursor_info.image.fg_color = CURSOR_COLOR;
+#if 0
+	if (ioctl(fd_vid1, FBIO_SET_CURSOR, &cursor_info) < 0)
+        {
+		printf("\nFailed  FBIO_SET_CURSOR");
+		return FAILURE;
+	}
+
+	start_loop();
+#endif
+
+	/* unmap video buffers */
+#if 0
+	if (unmap_and_disable(VID0) < 0)
+        {
+		return FAILURE;
+        }
+	if (unmap_and_disable(VID1) < 0)
+        {
+		return FAILURE;
+        }
+	if (unmap_and_disable(OSD1) < 0)
+        {
+		return FAILURE;
+        }
+#endif
+	if (unmap_and_disable(OSD0) < 0)
+        {
+		return FAILURE;
+        }
+
+	DBGEXIT;
+	return SUCCESS;
+}
+/*******************************************************************************
+ *	Function will use the SysFS interface to change the output and mode
+ */
+static int change_sysfs_attrib(char *attribute, char *value)
+{
+	int sysfd = -1;
+	char init_val[32];
+	char attrib_tag[128];
+
+	strcpy(attrib_tag, "/sys/class/davinci_display/ch0/");
+	strcat(attrib_tag, attribute);
+
+	sysfd = open(attrib_tag, O_RDWR);
+	if (!sysfd) {
+		printf("Error: cannot open %d\n", sysfd);
+		return FAILURE;
+	}
+	printf("%s was opened successfully\n", attrib_tag);
+
+	read(sysfd, init_val, 32);
+	lseek(sysfd, 0, SEEK_SET);
+	printf("Current %s value is %s\n", attribute, init_val);
+
+	write(sysfd, value, 1 + strlen(value));
+	lseek(sysfd, 0, SEEK_SET);
+
+	memset(init_val, '\0', 32);
+	read(sysfd, init_val, 32);
+	lseek(sysfd, 0, SEEK_SET);
+	printf("Changed %s to %s\n", attribute, init_val);
+
+	close(sysfd);
+	return SUCCESS;
+}
+
+int _tmain(int argc, _TCHAR* argv[]) 
+{
+        int ret = 0;
+
+	DBGENTER;
+	if (open_all_windows() != 0)
+        {
+		printf("Test fail\n");
+		return 0;
+	}
+	ret = vpbe_UE_3(LCD_STD_640x480);
+	close_all_windows();
+	DBGEXIT;
+	return ret;
+}

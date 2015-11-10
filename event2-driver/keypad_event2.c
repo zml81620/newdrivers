@@ -45,13 +45,24 @@ module_param(col_scan_udelay, ulong, S_IRUGO);
 MODULE_PARM_DESC(col_scan_udelay, "udelay before scan column status, "
 		"default is 5");
 
+#if 1
+static unsigned long clk_div = 4;
+module_param(clk_div, ulong, S_IRUGO);
+MODULE_PARM_DESC(clk_div, "scan timer dived, "
+		"default is 4");
+#endif
+
 
 static void matrix_kp_scan(unsigned long data);
 static void matrix_kp_setup_scan_timer(struct timer_list * timer,
 		unsigned long data)
 {
 	timer->function = matrix_kp_scan;
-	timer->expires = jiffies + HZ/4;
+#if 0
+	timer->expires = jiffies + HZ/5;
+#else
+        timer->expires = jiffies + HZ/clk_div;
+#endif
 	timer->data = data;
 }
 
@@ -81,44 +92,47 @@ static void matrix_kp_get_col_status(unsigned char * status, int cnt)
 		   val = gpio_get_value(col_gpio[col]);
 		   if (val == 0)
 		   {
-			   status[row] |= (1<<col);
+                       status[row] |= (1<<col);
 		   }
 		}
 #if 1
 		ret = gpio_direction_input(row_gpio[row]);
 #else
 		ret = gpio_direction_input(row_gpio[row]);
-	    printk("\ngpio_direction_input(row_gpio[row]) = %d\n",ret);
+	        printk("\ngpio_direction_input(row_gpio[row]) = %d\n",ret);
 #endif
 	}
 }
 
 static void matrix_kp_processrow1(const unsigned char* status,int index,\
-								 struct input_dev * pdev)
+                                  struct input_dev * pdev)
 {
 	int row = index;
-	int col;	
+	int col;
 
-
+printk(KERN_ERR "\n1 status[%d]=0x%x\n",row,status[row]);
 	for (col = 0; col < COL_NR; col++)
-	{		
+	{
 		if (((status[row]) ^ (1 << col)) == 0)
-		 {
-            g_row1keypressed = !g_row1keypressed;
-			input_report_key(pdev, key_matrix[row][col], g_row1keypressed);
-			input_sync(pdev);
-		 }//if(1<<col)
+                {
+                    if(key_matrix[row][col] != KEY_RESERVED)
+                    {
+                      g_row1keypressed = !g_row1keypressed;
+		      input_report_key(pdev, key_matrix[row][col], g_row1keypressed);
+		      input_sync(pdev);
+                    }
+		}//if(1<<col)
 	}//for(col = 0; col < COL_NR; col++)
 }
 
 static void matrix_kp_scan(unsigned long data)
 {
 	struct input_dev * dev = (struct input_dev*)data;
-	unsigned char new_status[ROW_NR] = {0};	
+	unsigned char new_status[ROW_NR] = {0};
 
-
+    
 	matrix_kp_get_col_status(new_status, ROW_NR);
-
+    
 	matrix_kp_processrow1(new_status,0,dev);
 	matrix_kp_setup_scan_timer(&scan_timer, data);
 	add_timer(&scan_timer);
@@ -126,7 +140,8 @@ static void matrix_kp_scan(unsigned long data)
 
 static int matrix_kp_open(struct input_dev *dev)
 {
-    matrix_kp_get_col_status(col_status, ROW_NR);
+    gpio_direction_input(12);
+	matrix_kp_get_col_status(col_status, ROW_NR);
 	matrix_kp_setup_scan_timer(&scan_timer, (unsigned long)dev);
 	add_timer(&scan_timer);
 
@@ -135,7 +150,7 @@ static int matrix_kp_open(struct input_dev *dev)
 
 static void matrix_kp_close(struct input_dev *dev)
 {
-     del_timer_sync(&scan_timer);
+        del_timer_sync(&scan_timer);
 }
 
 static int matrix_kp_probe(struct platform_device *pdev)

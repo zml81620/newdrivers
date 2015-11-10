@@ -1,2 +1,2 @@
-/mnt/hgfs/share/spi-drvier/driver/myspi.ko
-/mnt/hgfs/share/spi-drvier/driver/myspi.o
+/mnt/hgfs/workdir/newdrivers/spi-drvier/driver/myspi.ko
+/mnt/hgfs/workdir/newdrivers/spi-drvier/driver/myspi.o

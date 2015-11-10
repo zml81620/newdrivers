@@ -3,7 +3,16 @@
 
 #define ZML_DEBUG  0
 
-
+#define DEBUG
+#ifdef DEBUG
+#define DBGENTER  	printf("%s : Enter\n", __FUNCTION__);
+#define DBGEXIT		printf("%s : Leave\n", __FUNCTION__);
+#define PREV_DEBUG(x)	printf("DEBUG:%s:%s:%s\n",__FUNCTION__,__LINE__,x);
+#else
+#define DBGENTER
+#define DBGEXIT
+#define PREV_DEBUG(x)
+#endif
 
 #define BIT(nr)			(1UL << (nr))
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
@@ -77,6 +86,6 @@ int bq27621_getvoltage(const int fd);
 int bq27621_getcurrent(const int fd);
 int bq27621_getavgpower(const int fd);
 
-float irno_getbootprogress(const int fd);
+int irno_getbootprogress(const int fd);
 
 #endif

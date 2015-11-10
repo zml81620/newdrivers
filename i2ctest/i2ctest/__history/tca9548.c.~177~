@@ -574,7 +574,7 @@ float irno_getbootprogress(const int fd)
     }
     value = (unsigned short)(ino_rdbuf[0] << 8);
     value |= ino_rdbuf[1];
-    temp = ((float)(value - MIN_TEMP)/(float)(MAX_RANGE))*100.0+0.5 ;
+    temp = ((value - MIN_TEMP)*1.0/MAX_RANGE)*100.0+0.5 ;
     percent = (int)temp;
     if(g_bakvalue == -1)
     {
@@ -595,8 +595,6 @@ float irno_getbootprogress(const int fd)
     if((g_repcnt >= 5)&&(percent >= 90))
     {
       percent = 100;
-      g_bakvalue = -1;
-      g_repcnt = 0;
     }
 #if 1
     printf("\n read %s,ret = %d,ino_rdbuf[0]=0x%x,ino_rdbuf[1]=0x%x\n",\

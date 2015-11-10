@@ -13,7 +13,7 @@
 #define ENABLE_TCA9548_CH2      0x04  //connect to BQ27621
 #define ENABLE_TCA9548_CH0      0x01  //connect to ADV7513 hdmi
 #define ENABLE_TCA9548_CH5      0x20  //connect to CH7026  image-fcouser
-#define ENABLE_INFRARED_CH6     0x40  //connect to infrared  image-fcouser
+#define ENABLE_INFRARED_CH6     0x40  //connect to infrared sensor
 
 
 #define SLAVE_BQ27621_ADDR    0x55

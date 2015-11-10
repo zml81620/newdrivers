@@ -595,8 +595,6 @@ float irno_getbootprogress(const int fd)
     if((g_repcnt >= 5)&&(percent >= 90))
     {
       percent = 100;
-      g_bakvalue = -1;
-      g_repcnt = 0;
     }
 #if 1
     printf("\n read %s,ret = %d,ino_rdbuf[0]=0x%x,ino_rdbuf[1]=0x%x\n",\

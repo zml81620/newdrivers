@@ -3,8 +3,6 @@
 
 #define ZML_DEBUG  0
 
-
-
 #define BIT(nr)			(1UL << (nr))
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
 #define I2C_CONTROLLER_NAME "/dev/i2c-1"
@@ -77,6 +75,6 @@ int bq27621_getvoltage(const int fd);
 int bq27621_getcurrent(const int fd);
 int bq27621_getavgpower(const int fd);
 
-float irno_getbootprogress(const int fd);
+int irno_getbootprogress(const int fd);
 
 #endif

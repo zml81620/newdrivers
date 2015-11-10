@@ -31,9 +31,8 @@ int _tmain(int argc, _TCHAR* argv[])
     {
        ret = irno_getbootprogress(fd);
        printf("irno_getbootprogress:ret = %d\n",ret);
-       sleep(10);
     }while(ret<100);
     disable_switcher_chan(fd);
-    close_master(&fd);
+    close_master();
     return 0;
 }

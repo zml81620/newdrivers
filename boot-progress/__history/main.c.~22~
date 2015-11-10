@@ -27,13 +27,11 @@ int _tmain(int argc, _TCHAR* argv[])
 	printf("can't open device\n");
         return -1;
     }
-    do
+    for(i=0;i<10;i++)
     {
        ret = irno_getbootprogress(fd);
-       printf("irno_getbootprogress:ret = %d\n",ret);
-       sleep(10);
-    }while(ret<100);
+       printf("irno_getbootprogress:ret = %d\n");
+    }
     disable_switcher_chan(fd);
-    close_master(&fd);
     return 0;
 }

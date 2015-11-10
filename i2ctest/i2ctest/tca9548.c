@@ -13,12 +13,12 @@
 
 const static unsigned char cmd_unsealbq27621_wr[][2] =
 {
-	{0x00,0x00},
-        {0x01,0x80},
-	{0x00,0x00},
-        {0x01,0x80},
-	{0x00,0x13},
-	{0x01,0x00}
+    {0x00,0x00},
+    {0x01,0x80},
+    {0x00,0x00},
+    {0x01,0x80},
+    {0x00,0x13},
+    {0x01,0x00}
 };
 
 static unsigned char cmd_chgChemID_wr[][2] =
@@ -44,14 +44,35 @@ const static unsigned char cmd_exit_updateblock[][2] =
 
 const static unsigned char cmd_initdata[][2] =
 {
+#if 0
 	{ 0x43, 0x18 },
 	{ 0x44, 0x9c },
+#else
+	{ 0x43, 0x0C },
+	{ 0x44, 0x4E },
 	{ 0x45, 0x5B },
 	{ 0x46, 0x0E },
+#endif
+	{ 0x45, 0x2D },
+	{ 0x46, 0x87 },
 	{ 0x49, 0x0c },
 	{ 0x4a, 0x1C },
 	{ 0x54, 0x01 },
 	{ 0x55, 0xFD }
+};
+
+const static unsigned char cmd_current_threshold[][2] =
+{
+	{ 0x40, 0x00 },
+    { 0x41, 0x64 },
+	{ 0x42, 0x00 },
+    { 0x43, 0x64 },
+	{ 0x44, 0x01 },
+    { 0x45, 0xF4 },
+	{ 0x46, 0x00 },
+    { 0x47, 0x3C },
+	{ 0x48, 0x3C },
+	{ 0x49, 0X01 }
 };
 
 int open_master(const char *pname)
@@ -239,11 +260,67 @@ int bq27621_readword(const int fd, const unsigned char reg_offset, unsigned char
 	write_device(fd, &(temp), sizeof(temp));
 	return read(fd, buf, 2);
 }
+/*
+对ba27621的电流阈值等参数进行初始化，设置默认数值,-1失败，1 成功
+*/
+int init_bq27621_step1(const int fd)
+{
+	int ret = -1;
+        int value1 = 0;
+        int value2 = 0;
+	int temp = 0;
+	int i;
+	unsigned short status = 0;
+	unsigned char old_chksum = 0x0;
+	unsigned char newchksum = 0x0;
+	unsigned char old_dsgIrate[2] = { 0x0 };
+	unsigned char old_chgIrate[2] = { 0x0 };
+	unsigned char old_quitIrate[2] = { 0x0 };
+	unsigned char old_dsgRelaxtime[2] = { 0x0 };
+        unsigned char old_chgRelaxtime[1] = { 0x0 };
+        unsigned char old_quitRelaxtime[1] = { 0x0 };
+
+	unsigned char bufcmd[2] = { 0x0 };
+
+	ret = bq27621_unseal(fd);
+	if (ret != 1)
+	{
+		return -1;
+	}
+        cmd_updateblock[1][1] = 0x51;
+	ret = bq27621_update_blcokram(fd,0,0x00);
+	if (ret < 0)
+	{
+		return -1;
+	}
+	for (i = 0; i < ARRAY_SIZE(cmd_current_threshold); i++)
+	{
+           ret = write_device(fd, (cmd_current_threshold[i]), sizeof(cmd_current_threshold[i]));
+	}
+        newchksum = 0xD2;
+	ret = bq27621_update_blcokram(fd, 1, newchksum);
+	if (ret < 0)
+	{
+           return -1;
+	}
+	bq27621_readword(fd, REGOFFSET_CHECKSUM, (unsigned char*)(&status));
+    printf("\n bq27621_readword,status=0x%x \n",(unsigned char)status);
+	if ((unsigned char)status == newchksum)
+	{
+		ret = 1;
+	}
+	else
+	{
+		ret = -1;
+	}
+	bq27621_exit_configmode(fd);
+	return ret;
+}
 
 /*
-对ba27621进行初始化，设置默认数值,-1失败，1 成功
+对ba27621的Design capcity等参数进行初始化，设置默认数值,-1失败，1 成功
 */
-int init_bq27621(const int fd)
+int init_bq27621_step2(const int fd)
 {
 	int ret = -1;
 	int temp;
@@ -262,6 +339,7 @@ int init_bq27621(const int fd)
 	{
 		return -1;		
 	}
+        cmd_updateblock[1][1] = 0x52;
 	ret = bq27621_update_blcokram(fd,0,0x00);
 	if (ret < 0)
 	{
@@ -300,8 +378,31 @@ int init_bq27621(const int fd)
 	bq27621_exit_configmode(fd);
 	return ret;
 }
+
+int bq27621_gecontrol_status(const int fd)
+{
+	unsigned short status = 0;
+	int ret = -1;
+	unsigned char cmd[1] = { REGOFFSET_CONTROL_STATUS };
+
+	write(fd, cmd, 1);
+	ret = read(fd, (unsigned char*)(&status), 2);
+        return ret;
+}
+
+int bq27621_getflages(const int fd)
+{
+	unsigned short status = 0;
+	int ret = -1;
+	unsigned char cmd[1] = { REGOFFSET_GETFLAGS };
+
+	write(fd, cmd, 1);
+	ret = read(fd, (unsigned char*)(&status), 2);
+        return ret;
+}
+
 /*
-   juge the bq2621 is charging or not,1: discharging, 0 charging
+   juge the bq2621 is charging or not,1: discharging, 0 charging,not accurency
 */
 int bq27621_ischarging(const int fd)
 {
@@ -372,53 +473,30 @@ int bq27621_getvoltage(const int fd)
 }
 
 /*
-get the current of bq27621,-1 means failed
+get the current of bq27621,,value <= 0 means discharging, value>0 charging
 */
-int bq27621_getcurrent(const int fd)
+short bq27621_getcurrent(const int fd)
 {
 	short status = 0;
-	int ret = -1;
+	//int ret = -1;
 	unsigned char cmd[1] = { REGOFFSET_CURRENT };
 
 	write(fd, cmd, 1);
-	ret = read(fd, (unsigned char*)(&status), 2);
-	if (ret > 0)
-	{
-		if (status & 0x8000)
-		{
-			status = (~status);
-		}
-		return status;
-	}
-	else
-	{
-		return -1;
-	}
+	read(fd, (unsigned char*)(&status), 2);
+        return status;
 }
 /*
-get the average power of bq27621,-1 means failed
+get the average power of bq27621,value <= 0 means discharging, value>0 charging
 */
-int bq27621_getavgpower(const int fd)
+short bq27621_getavgpower(const int fd)
 {
 	short status = 0;
-	int ret = -1;
+	//int ret = -1;
 	unsigned char cmd[1] = { REGOFFSET_AVGPOWER };
 
 	write(fd, cmd, 1);
-	ret = read(fd, (unsigned char*)(&status), 2);
-
-	if (ret > 0)
-	{
-		if (status & 0x8000)
-		{
-			status = (~status);
-		}
-		return status;
-	}
-	else
-	{
-		return -1;
-	}
+	read(fd, (unsigned char*)(&status), 2);
+        return status;
 }
 
 int bq27621_getremainingcapcity(const int fd)

@@ -598,7 +598,6 @@ float irno_getbootprogress(const int fd)
       g_bakvalue = -1;
       g_repcnt = 0;
     }
-	disable_switcher_chan(fd);
 #if 1
     printf("\n read %s,ret = %d,ino_rdbuf[0]=0x%x,ino_rdbuf[1]=0x%x\n",\
             (ret>0) ? "successfully" : "failed",ret,ino_rdbuf[0],ino_rdbuf[1]);

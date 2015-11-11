@@ -1,0 +1,144 @@
+说明:设备静置了12个小时,然后上电启动
+启动历时6分钟
+
+root@dm6446-evm:/app# ./progress-boot
+
+ read successfully,ret = 2,ino_rdbuf[0]=0x3,ino_rdbuf[1]=0x3
+
+ read temp value = 771,current percent=45 
+irno_getbootprogress:ret = 45
+
+ read successfully,ret = 2,ino_rdbuf[0]=0x3,ino_rdbuf[1]=0x13
+
+ read temp value = 787,current percent=49 
+irno_getbootprogress:ret = 49
+
+ read successfully,ret = 2,ino_rdbuf[0]=0x3,ino_rdbuf[1]=0x23
+
+ read temp value = 803,current percent=53 
+irno_getbootprogress:ret = 53
+
+ read successfully,ret = 2,ino_rdbuf[0]=0x3,ino_rdbuf[1]=0x32
+
+ read temp value = 818,current percent=56 
+irno_getbootprogress:ret = 56
+
+ read successfully,ret = 2,ino_rdbuf[0]=0x3,ino_rdbuf[1]=0x41
+
+ read temp value = 833,current percent=60 
+irno_getbootprogress:ret = 60
+
+ read successfully,ret = 2,ino_rdbuf[0]=0x3,ino_rdbuf[1]=0x50
+
+ read temp value = 848,current percent=63 
+irno_getbootprogress:ret = 63
+
+ read successfully,ret = 2,ino_rdbuf[0]=0x3,ino_rdbuf[1]=0x5e
+
+ read temp value = 862,current percent=66 
+irno_getbootprogress:ret = 66
+
+ read successfully,ret = 2,ino_rdbuf[0]=0x3,ino_rdbuf[1]=0x6b
+
+ read temp value = 875,current percent=69 
+irno_getbootprogress:ret = 69
+
+ read successfully,ret = 2,ino_rdbuf[0]=0x3,ino_rdbuf[1]=0x78
+
+ read temp value = 888,current percent=72 
+irno_getbootprogress:ret = 72
+
+ read successfully,ret = 2,ino_rdbuf[0]=0x3,ino_rdbuf[1]=0x85
+
+ read temp value = 901,current percent=75 
+irno_getbootprogress:ret = 75
+
+ read successfully,ret = 2,ino_rdbuf[0]=0x3,ino_rdbuf[1]=0x91
+
+ read temp value = 913,current percent=78 
+irno_getbootprogress:ret = 78
+
+ read successfully,ret = 2,ino_rdbuf[0]=0x3,ino_rdbuf[1]=0x9d
+
+ read temp value = 925,current percent=81 
+irno_getbootprogress:ret = 81
+
+ read successfully,ret = 2,ino_rdbuf[0]=0x3,ino_rdbuf[1]=0xa8
+
+ read temp value = 936,current percent=83 
+irno_getbootprogress:ret = 83
+
+ read successfully,ret = 2,ino_rdbuf[0]=0x3,ino_rdbuf[1]=0xb3
+
+ read temp value = 947,current percent=86 
+irno_getbootprogress:ret = 86
+
+ read successfully,ret = 2,ino_rdbuf[0]=0x3,ino_rdbuf[1]=0xbd
+
+ read temp value = 957,current percent=88 
+irno_getbootprogress:ret = 88
+
+ read successfully,ret = 2,ino_rdbuf[0]=0x3,ino_rdbuf[1]=0xc5
+
+ read temp value = 965,current percent=90 
+irno_getbootprogress:ret = 90
+
+ read successfully,ret = 2,ino_rdbuf[0]=0x3,ino_rdbuf[1]=0xcd
+
+ read temp value = 973,current percent=92 
+irno_getbootprogress:ret = 92
+
+ read successfully,ret = 2,ino_rdbuf[0]=0x3,ino_rdbuf[1]=0xd5
+
+ read temp value = 981,current percent=94 
+irno_getbootprogress:ret = 94
+
+ read successfully,ret = 2,ino_rdbuf[0]=0x3,ino_rdbuf[1]=0xdc
+
+ read temp value = 988,current percent=95 
+irno_getbootprogress:ret = 95
+
+ read successfully,ret = 2,ino_rdbuf[0]=0x3,ino_rdbuf[1]=0xe3
+
+ read temp value = 995,current percent=97 
+irno_getbootprogress:ret = 97
+
+ read successfully,ret = 2,ino_rdbuf[0]=0x3,ino_rdbuf[1]=0xe9
+
+ read temp value = 1001,current percent=98 
+irno_getbootprogress:ret = 98
+
+ read successfully,ret = 2,ino_rdbuf[0]=0x3,ino_rdbuf[1]=0xec
+
+ read temp value = 1004,current percent=99 
+irno_getbootprogress:ret = 99
+
+ read successfully,ret = 2,ino_rdbuf[0]=0x3,ino_rdbuf[1]=0xed
+
+ read temp value = 1005,current percent=99 
+irno_getbootprogress:ret = 99
+
+ read successfully,ret = 2,ino_rdbuf[0]=0x3,ino_rdbuf[1]=0xed
+
+ read temp value = 1005,current percent=99 
+irno_getbootprogress:ret = 99
+
+ read successfully,ret = 2,ino_rdbuf[0]=0x3,ino_rdbuf[1]=0xed
+
+ read temp value = 1005,current percent=99 
+irno_getbootprogress:ret = 99
+
+ read successfully,ret = 2,ino_rdbuf[0]=0x3,ino_rdbuf[1]=0xed
+
+ read temp value = 1005,current percent=99 
+irno_getbootprogress:ret = 99
+
+ read successfully,ret = 2,ino_rdbuf[0]=0x3,ino_rdbuf[1]=0xed
+
+ read temp value = 1005,current percent=99 
+irno_getbootprogress:ret = 99
+
+ read successfully,ret = 2,ino_rdbuf[0]=0x3,ino_rdbuf[1]=0xed
+
+ read temp value = 1005,current percent=100 
+irno_getbootprogress:ret = 100

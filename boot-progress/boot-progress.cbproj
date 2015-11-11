@@ -70,8 +70,8 @@
         <ProjectType>CppConsoleApplication</ProjectType>
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;$(DCC_Namespace)</DCC_Namespace>
         <_TCHARMapping>char</_TCHARMapping>
-        <IncludePath>F:\GitHub-backup\newdrivers\boot-progress\;$(IncludePath)</IncludePath>
-        <ILINK_LibraryPath>F:\GitHub-backup\newdrivers\boot-progress\;$(ILINK_LibraryPath)</ILINK_LibraryPath>
+        <IncludePath>..\i2ctest\i2ctest\;F:\GitHub-backup\newdrivers\boot-progress\;$(IncludePath)</IncludePath>
+        <ILINK_LibraryPath>..\i2ctest\i2ctest\;F:\GitHub-backup\newdrivers\boot-progress\;$(ILINK_LibraryPath)</ILINK_LibraryPath>
         <DCC_CBuilderOutput>JPHNE</DCC_CBuilderOutput>
         <IntermediateOutputDir>.\$(Platform)\$(Config)</IntermediateOutputDir>
         <FinalOutputDir>.\$(Platform)\$(Config)</FinalOutputDir>
@@ -145,6 +145,15 @@
         <CppCompile Include="main.c">
             <BuildOrder>1</BuildOrder>
         </CppCompile>
+        <None Include="..\i2ctest\i2ctest\cmd.h">
+            <BuildOrder>2</BuildOrder>
+        </None>
+        <CppCompile Include="..\i2ctest\i2ctest\tca9548.c">
+            <BuildOrder>3</BuildOrder>
+        </CppCompile>
+        <None Include="..\i2ctest\i2ctest\tca9548.h">
+            <BuildOrder>4</BuildOrder>
+        </None>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

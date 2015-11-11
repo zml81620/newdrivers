@@ -18,7 +18,7 @@
 #define MAX_COL_SCAN_UDELAY 20
 #define DEV_DRV_NAME "davinci_matrix_keypad"
 #define INIT_KEY_STATUS 0
-#define KEY_ENABLE_DELAY  700
+#define KEY_ENABLE_DELAY  300
 
 
 static const char row_gpio[ROW_NR] = {10,11,12};
@@ -39,6 +39,7 @@ static unsigned char row2_status = 0;
 
 //static unsigned char  g_init_key = 0;
 static unsigned short g_key_delay = 0;
+static unsigned short g_key_flage = 1;
 
 static unsigned char row_status[ROW_NR][COL_NR] =
 {
@@ -96,7 +97,6 @@ static int judge_row_status(const unsigned char status,const int row_index)
     return -1;
 }
 
-
 static void matrix_kp_get_col_statusbyrow(unsigned char * status, int row_index)
 {
     int col;
@@ -145,8 +145,10 @@ static void decode_row_status(unsigned long data,const unsigned char new_status,
        {
          input_report_key(dev, key_matrix[row_index][col],0);
          input_sync(dev);
+#if 1
          printk(KERN_ERR "\nkey %d will released,row=%x,col=%x \n",key_matrix[row_index][col],\
               row_index,col);
+#endif
        }
        pressed = 1;
        flage = 1;
@@ -168,8 +170,10 @@ static void decode_row_status(unsigned long data,const unsigned char new_status,
     {
        input_report_key(dev, key_matrix[row_index][col_index],pressed);
        input_sync(dev);
-//       printk(KERN_ERR "\nkey %d will %s,row=%x,col=%x\n",key_matrix[row_index][col_index],\
-//              pressed?"pressed":"released",row_index,col_index);
+#if 1
+       printk(KERN_ERR "\nkey %d will %s,row=%x,col=%x\n",key_matrix[row_index][col_index],\
+              pressed?"pressed":"released",row_index,col_index);
+#endif
        *old_status = new_status;
     }
 }
@@ -294,38 +298,44 @@ static void send_key_when_init(unsigned long data,const unsigned char key,int pr
 
     input_report_key(dev,key,pressed);
     input_sync(dev);
+#if 1
+       printk(KERN_ERR "\nkey %d will %s\n",key,pressed?"pressed":"released");
+#endif
 }
 
 static void matrix_kp_scan(unsigned long data)
 {
-        int row2_pressed = 0;
+    int row2_pressed = 0;
 
-        if (g_key_delay < (KEY_ENABLE_DELAY-2))
-        {
-          g_key_delay++ ;
-        }
-        else if(g_key_delay == (KEY_ENABLE_DELAY-2))
-        {
-          send_key_when_init(data,key_matrix[1][1],1);
-          g_key_delay++ ;
-        }
-        else if(g_key_delay == (KEY_ENABLE_DELAY-1))
-        {
-          send_key_when_init(data,key_matrix[1][1],0);
-          g_key_delay++ ;
-        }
-
-        if(g_key_delay == KEY_ENABLE_DELAY)
-        {
-          row2_pressed = matrix_kp_process_row2(data);
-          if(!row2_pressed)
-          {
-            matrix_kp_process_row1(data);
-            matrix_kp_process_row0(data);
-          }
-        }
-	matrix_kp_setup_scan_timer(&scan_timer, data);
-	add_timer(&scan_timer);
+    if(g_key_delay > KEY_ENABLE_DELAY)
+    {
+      row2_pressed = matrix_kp_process_row2(data);
+      if(!row2_pressed)
+      {
+        matrix_kp_process_row1(data);
+        matrix_kp_process_row0(data);
+      }
+    }
+    else if(g_key_delay <= 100)
+    {
+      if(0 == (g_key_delay%20))
+      {
+        send_key_when_init(data,key_matrix[2][2],g_key_flage);
+        g_key_flage = !g_key_flage;
+      }
+      g_key_delay++;
+    }
+    else if( (g_key_delay > 100) && (g_key_delay <= KEY_ENABLE_DELAY) )
+    {
+      if(0 == (g_key_delay%20))
+      {
+        send_key_when_init(data,key_matrix[2][4],g_key_flage);
+        g_key_flage = !g_key_flage;
+      }
+      g_key_delay++;
+    }	
+    matrix_kp_setup_scan_timer(&scan_timer, data);
+    add_timer(&scan_timer);
 }
 
 static int matrix_kp_open(struct input_dev *dev)

@@ -16,6 +16,7 @@
 #define ENABLE_TCA9548_CH0      0x01  //connect to ADV7513 hdmi
 #define ENABLE_TCA9548_CH5      0x20  //connect to CH7026  image-fcouser
 #define ENABLE_INFRARED_CH6     0x40  //connect to infrared sensor
+#define ENABLE_ADT7410_CH3      0x08  //connect to ADT7410
 
 
 #define SLAVE_BQ27621_ADDR    0x55
@@ -23,6 +24,7 @@
 #define SLAVE_HDMI_ADDR       0x39
 #define SLAVE_IMAGER_ADDR     0x76
 #define SLAVE_INFRARED_ADDR   0x2F
+#define SLAVE_ADT7410_ADDR    0x48
 
 
 #define CHEM_ID_1202     1
@@ -44,6 +46,16 @@
 #define REGOFFSET_CURRENT                 0x10
 #define REGOFFSET_AVGPOWER                0x18
 #define REGOFFSET_STATEOFCHARGE           0x1C
+
+//------------ADT7410-----------------------------
+#define INVALID_ADT7410_VALUE             -1000.0
+#define TEMP_ALARM_FALGE                  1
+#define TEMP_ALARM_THRESHOLD              15
+#define REGOFFSET_ID                      0x0B
+#define REGOFFSET_CONFIG                  0x03
+#define REGOFFSET_TEMP_HIGHT              0x0
+//#define REGOFFSET_TEMP_LOW                0x01
+
 
 
 
@@ -70,13 +82,16 @@ int bq27621_exit_configmode(const int fd);
 int bq27621_chg_chemID(const int fd, const unsigned short chemID);
 int bq27621_update_blcokram(const int fd, const int type, unsigned char chksum);
 
-int init_bq27621(const int fd);
+int init_bq27621_step1(const int fd);
+int init_bq27621_step2(const int fd);
 int bq27621_ischarging(const int fd);
 int bq27621_stateofcharg(const int fd);
 int bq27621_getvoltage(const int fd);
 int bq27621_getcurrent(const int fd);
 int bq27621_getavgpower(const int fd);
 
-float irno_getbootprogress(const int fd);
+short int irno_getbootprogress(const int fd);
+
+short int adt7410_getTemperature(const int fd,short int *temp_alarm);
 
 #endif

@@ -537,15 +537,18 @@ int bq27621_getfullchargecapcity(const int fd)
 	}
 }
 //--------------------------------------------------------------
-#define  MIN_TEMP   0x23e  //+40摄氏度
-#define  MAX_TEMP   0x3f0  //-183摄氏度
-#define  MAX_RANGE  (MAX_TEMP - MIN_TEMP)
-static   int g_bakvalue = -1;
-static   short g_repcnt = 0;
-float irno_getbootprogress(const int fd)
+#define  INVALID_TEMP    0x230
+#define  MIN_TEMP        0x23e  //+40摄氏度
+#define  MAX_TEMP        0x3f0  //-183摄氏度
+#define  MAX_RANGE       (MAX_TEMP - MIN_TEMP)
+#define  DIFF_THRESHOLD  3
+
+static short g_bakvalue = INVALID_TEMP;
+short int irno_getbootprogress(const int fd)
 {
     int ret = -1 ;
     unsigned short value = 0;
+    unsigned short diff = 0;
     unsigned char ino_rdbuf[2] = {0,0};
     unsigned char ino_wrbuf[2] = {0x14,0x02};
     struct i2c_rdwr_ioctl_data ioctl_data;
@@ -574,35 +577,92 @@ float irno_getbootprogress(const int fd)
     }
     value = (unsigned short)(ino_rdbuf[0] << 8);
     value |= ino_rdbuf[1];
-    temp = ((float)(value - MIN_TEMP)/(float)(MAX_RANGE))*100.0+0.5 ;
-    percent = (int)temp;
-    if(g_bakvalue == -1)
+
+    if(g_bakvalue == INVALID_TEMP)
     {
        g_bakvalue = value;
     }
     else
     {
-       if(g_bakvalue == value)
+       diff = value - g_bakvalue;
+       g_bakvalue = value;
+       if(diff <= DIFF_THRESHOLD)
        {
-         g_repcnt ++;
-       }
-       else
-       {
-         g_repcnt = 0;
-         g_bakvalue = value;
+          percent = 100;
+          g_bakvalue = INVALID_TEMP;
        }
     }
-    if((g_repcnt >= 5)&&(percent >= 90))
+    if(percent != 100)
     {
-      percent = 100;
-      g_bakvalue = -1;
-      g_repcnt = 0;
+       temp = ((float)(value - MIN_TEMP)/(float)(MAX_RANGE))*100.0+0.5 ;
+       percent = (int)temp;
+       if(percent < 0)
+       {
+         percent = 0;
+       }
+       else if(percent > 100)
+       {
+         percent = 100 ;
+       }
     }
-	disable_switcher_chan(fd);
+
+    disable_switcher_chan(fd);
 #if 1
     printf("\n read %s,ret = %d,ino_rdbuf[0]=0x%x,ino_rdbuf[1]=0x%x\n",\
             (ret>0) ? "successfully" : "failed",ret,ino_rdbuf[0],ino_rdbuf[1]);
     printf("\n read temp value = %d,current percent=%d \n",value,percent);
 #endif
     return percent;
+}
+//------------------------获取ADT7410的温度----------------------------------
+//return value:INVALID_ADT7410_VALUE means failed
+// if return value is avalid,temp_alarm == TEMP_ALARM_FALGE,means temp is too high,
+// application should alarm;if return value is unavalid, temp_alarm is unavalid too
+
+#define MAX_OVERTEMP_CNT  6
+short int adt7410_getTemperature(const int fd,short int *temp_alarm)
+{
+    int len = 0;
+    short int value = 0;
+    unsigned char ino_rdbuf[2] = {0,0};
+    unsigned char ino_wrbuf[2] = {0,0};
+
+    enable_switcher_chan(fd, ENABLE_ADT7410_CH3);
+    select_slave(fd, SLAVE_ADT7410_ADDR);
+    ino_wrbuf[0] = REGOFFSET_CONFIG;
+    ino_wrbuf[1] = 0x20;
+    write(fd,ino_wrbuf,2);
+    sleep(1);
+    ino_wrbuf[0] = REGOFFSET_TEMP_HIGHT;
+    ino_rdbuf[0] = 0;
+    ino_rdbuf[1] = 0;
+    write(fd,ino_wrbuf,1);
+    len = read(fd,ino_rdbuf,2);
+    printf("read Temp,valueH=0x%x,valueL=0x%x\n",ino_rdbuf[0],ino_rdbuf[1]);
+    disable_switcher_chan(fd);
+
+    if(len >= 0)
+    {
+       value = ino_rdbuf[0];
+       value = ((value<<8)|ino_rdbuf[1]);
+       value >>= 3;
+       if(0x1000 == (value & 0x1000))
+       {
+         value &= 0x0FFF;
+         value >>= 4;
+       }
+       else
+       {
+         value >>= 4;
+         if(value >= TEMP_ALARM_THRESHOLD)
+         {
+           *temp_alarm = TEMP_ALARM_FALGE;
+         }
+       }
+    }
+    else
+    {
+       value = INVALID_ADT7410_VALUE;
+    }
+    return value;
 }

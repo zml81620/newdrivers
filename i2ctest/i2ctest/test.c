@@ -49,7 +49,8 @@ const char *command[] =
    "7:Disable chan4",\
    "8:HDMI test",\
    "9:Imager test",\
-   "10:infrared-sensor test"\
+   "10:infrared-sensor test",\
+   "11:ADT7410 test"
 };
 
 
@@ -109,6 +110,9 @@ int main(int argc,char *argv[])
     unsigned char old_tr[2] = {0x0};
     unsigned char bufcmd[2] = {0x0};
 
+    short adt_temp = 0.0;
+    short temp_alarm = 0;
+
    fd = open_master(I2C_CONTROLLER_NAME);
    if (fd < 0)
    {
@@ -149,7 +153,7 @@ int main(int argc,char *argv[])
 		 break;
 		 case 5:
 		 {
-#if 1
+#if 0
 		   enable_switcher_chan(fd, ENABLE_TCA9548_CH2);
 		   select_slave(fd, SLAVE_BQ27621_ADDR);
 		   if (last_cmd == 0)
@@ -289,9 +293,28 @@ int main(int argc,char *argv[])
                    sleep(3);
 #endif
 #endif
-                     disable_switcher_chan(fd);
+                   disable_switcher_chan(fd);
 		 }
 		 break;
+                 case 11:
+                 {
+#if 1
+                   adt_temp = adt7410_getTemperature(fd,&temp_alarm);
+                   printf("read temp value,value=%d,alarm_flage=%d\n",adt_temp,temp_alarm);
+#else
+                   enable_switcher_chan(fd, ENABLE_ADT7410_CH3);
+                   select_slave(fd, SLAVE_ADT7410_ADDR);
+
+                   ino_wrbuf[0] = REGOFFSET_ID;
+                   ino_rdbuf[0] = 0;
+                   len = write(fd,ino_wrbuf,1);
+                   printf("1 read ID,value=0x%x\n",len);
+                   len = read(fd,ino_rdbuf,1);
+                   printf("2 read ID,value=0x%x\n",ino_rdbuf[0]);
+                   disable_switcher_chan(fd);
+#endif
+                 }
+                 break;
 	  }//switch
    }//while()   
    close_master(&fd);

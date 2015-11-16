@@ -49,12 +49,14 @@
 
 //------------ADT7410-----------------------------
 #define INVALID_ADT7410_VALUE             -1000.0
-//#define TEMP_ALARM_FALGE                  1
-#define TEMP_ALARM_THRESHOLD              55
-#define TEMP_CANCELALARM_THRESHOLD        50
+#define TEMP_ALARM_FALGE                  1
+#define TEMP_ALARM_THRESHOLD              15
 #define REGOFFSET_ID                      0x0B
 #define REGOFFSET_CONFIG                  0x03
 #define REGOFFSET_TEMP_HIGHT              0x0
+//#define REGOFFSET_TEMP_LOW                0x01
+
+
 
 
 typedef struct tag_i2c_bq27621
@@ -90,6 +92,6 @@ int bq27621_getavgpower(const int fd);
 
 short int irno_getbootprogress(const int fd);
 
-short int adt7410_getTemperature(const int fd,short int *temp_alarm,short int *cancle_alarm);
+short int adt7410_getTemperature(const int fd,short int *temp_alarm);
 
 #endif

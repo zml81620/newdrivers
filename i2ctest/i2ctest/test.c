@@ -112,7 +112,6 @@ int main(int argc,char *argv[])
 
     short adt_temp = 0.0;
     short temp_alarm = 0;
-    short cancel_alarm = 0;
 
    fd = open_master(I2C_CONTROLLER_NAME);
    if (fd < 0)
@@ -300,10 +299,8 @@ int main(int argc,char *argv[])
                  case 11:
                  {
 #if 1
-                   cancel_alarm = 0;
-                   temp_alarm = 0;
-                   adt_temp = adt7410_getTemperature(fd,&temp_alarm,&cancel_alarm);
-                   printf("read temp value,value=%d,alarm_flage=%d,cancel_flage=%d\n",adt_temp,temp_alarm,cancel_alarm);
+                   adt_temp = adt7410_getTemperature(fd,&temp_alarm);
+                   printf("read temp value,value=%d,alarm_flage=%d\n",adt_temp,temp_alarm);
 #else
                    enable_switcher_chan(fd, ENABLE_ADT7410_CH3);
                    select_slave(fd, SLAVE_ADT7410_ADDR);

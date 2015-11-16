@@ -617,11 +617,10 @@ short int irno_getbootprogress(const int fd)
 //------------------------获取ADT7410的温度----------------------------------
 //return value:INVALID_ADT7410_VALUE means failed
 // if return value is avalid,temp_alarm == TEMP_ALARM_FALGE,means temp is too high,
-// application should alarm;if return value is unavalid, temp_alarm and cancle_alarm
-// are both unavalid too
+// application should alarm;if return value is unavalid, temp_alarm is unavalid too
 
-short int g_overtemp_flage = 0;
-short int adt7410_getTemperature(const int fd,short int *temp_alarm,short int *cancle_alarm)
+#define MAX_OVERTEMP_CNT  6
+short int adt7410_getTemperature(const int fd,short int *temp_alarm)
 {
     int len = 0;
     short int value = 0;
@@ -630,18 +629,18 @@ short int adt7410_getTemperature(const int fd,short int *temp_alarm,short int *c
 
     enable_switcher_chan(fd, ENABLE_ADT7410_CH3);
     select_slave(fd, SLAVE_ADT7410_ADDR);
-
+    ino_wrbuf[0] = REGOFFSET_CONFIG;
+    ino_wrbuf[1] = 0x20;
+    write(fd,ino_wrbuf,2);
+    sleep(1);
     ino_wrbuf[0] = REGOFFSET_TEMP_HIGHT;
     ino_rdbuf[0] = 0;
     ino_rdbuf[1] = 0;
     write(fd,ino_wrbuf,1);
     len = read(fd,ino_rdbuf,2);
     printf("read Temp,valueH=0x%x,valueL=0x%x\n",ino_rdbuf[0],ino_rdbuf[1]);
-    ino_wrbuf[0] = REGOFFSET_CONFIG;
-    ino_wrbuf[1] = 0x20;
-    write(fd,ino_wrbuf,2);
-    //sleep(1);
     disable_switcher_chan(fd);
+
     if(len >= 0)
     {
        value = ino_rdbuf[0];
@@ -649,25 +648,18 @@ short int adt7410_getTemperature(const int fd,short int *temp_alarm,short int *c
        value >>= 3;
        if(0x1000 == (value & 0x1000))
        {
-         value = (value - 8192)>>4;
+         value &= 0x0FFF;
+         value >>= 4;
        }
        else
        {
          value >>= 4;
          if(value >= TEMP_ALARM_THRESHOLD)
          {
-           g_overtemp_flage = 1;
-           *temp_alarm = 1;
-           *cancle_alarm = 0;
+           *temp_alarm = TEMP_ALARM_FALGE;
          }
-         if((g_overtemp_flage) && (value <= TEMP_CANCELALARM_THRESHOLD))
-         {
-           g_overtemp_flage = 0;
-           *temp_alarm = 0;
-           *cancle_alarm = 1;
-         }
-       }//else
-    }//if(len>0)
+       }
+    }
     else
     {
        value = INVALID_ADT7410_VALUE;

@@ -316,15 +316,6 @@ static void matrix_kp_scan(unsigned long data)
         matrix_kp_process_row0(data);
       }
     }
-//    else if(g_key_delay <= 100)
-//    {
-//      if(0 == (g_key_delay%20))
-//      {
-//        send_key_when_init(data,key_matrix[2][2],g_key_flage);
-//        g_key_flage = !g_key_flage;
-//      }
-//      g_key_delay++;
-//    }
     else if(g_key_delay <= KEY_ENABLE_DELAY)
     {
       if(0 == (g_key_delay%10))

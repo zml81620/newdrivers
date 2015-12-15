@@ -22,6 +22,7 @@ __attribute__((section("__versions"))) = {
 	{ 0x799c50a, "param_set_ulong" },
 	{ 0xfdc91274, "platform_driver_register" },
 	{ 0x8efb9c01, "platform_device_register" },
+	{ 0x521bd2bd, "davinci_soc_info" },
 	{ 0xf7802486, "__aeabi_uidivmod" },
 	{ 0x3c97a268, "input_event" },
 	{ 0xa7f44650, "add_timer" },

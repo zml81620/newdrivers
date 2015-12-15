@@ -18,7 +18,7 @@
 #define MAX_COL_SCAN_UDELAY 20
 #define DEV_DRV_NAME "davinci_matrix_keypad"
 #define INIT_KEY_STATUS 0
-#define KEY_ENABLE_DELAY  220
+#define KEY_ENABLE_DELAY  300
 
 
 static const char row_gpio[ROW_NR] = {10,11,12};
@@ -61,6 +61,11 @@ static unsigned long col_scan_udelay = DFT_COL_SCAN_UDELAY;
 module_param(col_scan_udelay, ulong, S_IRUGO);
 MODULE_PARM_DESC(col_scan_udelay, "udelay before scan column status, "
 		"default is 5");
+
+#define PIN_HDMI_INT 30
+
+static int g_reported = 0;
+static void check_hdmi_int(unsigned long data);
 
 
 static void matrix_kp_scan(unsigned long data);
@@ -299,8 +304,7 @@ static void send_key_when_init(unsigned long data,const unsigned char key,int pr
     input_report_key(dev,key,pressed);
     input_sync(dev);
 #if 1
-       printk(KERN_ERR "\nkey %d will %s,row=%x,col=%x\n",key,\
-              pressed?"pressed":"released",row_index,col_index);
+       printk(KERN_ERR "\nkey %d will %s\n",key,pressed?"pressed":"released");
 #endif
 }
 
@@ -317,20 +321,11 @@ static void matrix_kp_scan(unsigned long data)
         matrix_kp_process_row0(data);
       }
     }
-    else if(g_key_delay <= 100)
-    {
-      if(0 == (g_key_delay%20))
-      {
-        send_key_when_init(data,key_matrix[2][2],g_key_flage);
-        g_key_flage = !g_key_flage;
-      }
-      g_key_delay++;
-    }
     else if(g_key_delay <= KEY_ENABLE_DELAY)
     {
-      if(0 == (g_key_delay%20))
+      if(0 == (g_key_delay%10))
       {
-        send_key_when_init(data,key_matrix[2][4],1);
+        send_key_when_init(data,key_matrix[2][4],g_key_flage);
         g_key_flage = !g_key_flage;
       }
       g_key_delay++;
@@ -442,6 +437,39 @@ static void matrix_kp_check_params(void)
 	}
 }
 
+static void check_hdmi_int(unsigned long data)
+{
+    int val = 1;
+    struct input_dev * dev = (struct input_dev*)data;
+
+    val = gpio_get_value(PIN_HDMI_INT);
+    if( (0 == val)&&(0 == g_reported) )
+    {
+       input_report_key(dev, KEY_TAB,1);
+       input_sync(dev);
+       g_reported = 1;
+#if 1
+       printk(KERN_ERR "\nkey %d will report,1\n",KEY_TAB);
+#endif
+       return ;
+    }
+
+    if(1 == g_reported)
+    {
+       input_report_key(dev, KEY_TAB,0);
+       input_sync(dev);
+       g_reported = 2;
+       return ;
+    }
+
+    if(1 == val)
+    {
+       if(2 == g_reported)
+       {
+         g_reported = 0;
+       }
+    }
+}
 
 static int __init matrix_kp_init(void)
 {

@@ -62,6 +62,11 @@ module_param(col_scan_udelay, ulong, S_IRUGO);
 MODULE_PARM_DESC(col_scan_udelay, "udelay before scan column status, "
 		"default is 5");
 
+#define PIN_HDMI_INT 30
+
+static int g_reported = 0;
+static void check_hdmi_int(unsigned long data);
+
 
 static void matrix_kp_scan(unsigned long data);
 static void matrix_kp_setup_scan_timer(struct timer_list * timer,
@@ -307,6 +312,8 @@ static void matrix_kp_scan(unsigned long data)
 {
     int row2_pressed = 0;
 
+    check_hdmi_int(data);
+
     if(g_key_delay > KEY_ENABLE_DELAY)
     {
       row2_pressed = matrix_kp_process_row2(data);
@@ -432,6 +439,45 @@ static void matrix_kp_check_params(void)
 	}
 }
 
+static void check_hdmi_int(unsigned long data)
+{
+    int val = 1;
+    struct input_dev * dev = (struct input_dev*)data;
+
+    val = gpio_get_value(PIN_HDMI_INT);
+#if 0
+       printk(KERN_ERR "\npin %d:value=%d\n",PIN_HDMI_INT,val);
+#endif
+    if( (0 == val)&&(0 == g_reported) )
+    {
+       input_report_key(dev, KEY_TAB,1);
+       input_sync(dev);
+       g_reported = 1;
+#if 1
+       printk(KERN_ERR "\nkey %d will report,1\n",KEY_TAB);
+#endif
+       return ;
+    }
+
+    if(1 == g_reported)
+    {
+       input_report_key(dev, KEY_TAB,0);
+       input_sync(dev);
+       g_reported = 2;
+#if 1
+       printk(KERN_ERR "\nkey %d will report,0\n",KEY_TAB);
+#endif
+       return ;
+    }
+
+    if(1 == val)
+    {
+       if(2 == g_reported)
+       {
+         g_reported = 0;
+       }
+    }
+}
 
 static int __init matrix_kp_init(void)
 {
